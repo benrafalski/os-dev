@@ -1,0 +1,1 @@
+qemu-system-x86_64 -drive format=raw,file="D:\Programs\OS Stuff\os-dev\boot_sect.bin"
