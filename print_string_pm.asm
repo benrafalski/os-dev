@@ -46,14 +46,14 @@ WHITE_FGD equ 0x0F
 print_string_pm:
     pusha
     mov edx, VIDEO_MEMORY
-    ; xor ch, ch
-    ; mov ch, BLACK_BGD
-    ; or ch, WHITE_FGD
+    xor ch, ch
+    mov ch, BLACK_BGD
+    or ch, WHITE_FGD
 
 print_string_pm_loop:
     mov al, [ebx]
-    ; mov ah, ch
-    mov ah, 0x0f
+    mov ah, ch
+    ; mov ah, 0x0f
 
     cmp al, 0
     je print_string_pm_done
