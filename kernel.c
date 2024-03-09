@@ -33,18 +33,17 @@
 #define YELLOW_FGD 0x0E
 #define WHITE_FGD 0x0F
 
-// void write_string(int color, const char *string)
-// {
-//     volatile char *video = (volatile char*)0xb8000;
-//     while( *string != 0 )
-//     {
-//         *video++ = *string++;
-//         *video++ = color;
-//     }
-// }
+void write_string(int color, const char *string)
+{
+    volatile char *video = (volatile char*)0xb8000;
+    while( *string != 0 )
+    {
+        *video++ = *string++;
+        *video++ = color;
+    }
+}
 
 
 void main() {
-    char * video_memory = ( char *) 0xb8000;
-    *video_memory = 'X';
+    write_string(WHITE_FGD | CYAN_BGD, "X");
 }
