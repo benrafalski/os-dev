@@ -2,6 +2,8 @@
 // read and write data to the I/O addresses 
 // that are mapped to specific controller registers
 
+unsigned char port_byte_in(unsigned short port);
+
 unsigned char port_byte_in(unsigned short port){
     unsigned char result;
     // in: reads contents of port to al
