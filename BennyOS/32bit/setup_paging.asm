@@ -4,6 +4,9 @@ setup_paging:
     and eax, 01111111111111111111111111111111b     ; Clear the PG-bit, which is bit 31.
     mov cr0, eax                                   ; Set control register 0 to the A-register.
 
+    ; mov ebx, HERE
+    ; call print_string_32
+
 
     ; Basically we want to identity map the first two megabytes so:
 
@@ -59,3 +62,5 @@ enable_paging:
     or eax, 1 << 31              ; Set the PG-bit, which is the 32nd bit (bit 31).
     mov cr0, eax                 ; Set control register 0 to the A-register.
     ; Now we're in 32-bit compatibility mode.
+
+    ret
