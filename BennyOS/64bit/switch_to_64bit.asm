@@ -3,7 +3,7 @@ switch_to_64:
     call setup_paging
 
     lgdt [GDT64.Pointer]         ; Load the 64-bit global descriptor table.
-
+    jmp GDT64.Code:init_lm       ; Set the code segment and enter 64-bit long mode.
     
 
 [bits 64]
@@ -15,7 +15,6 @@ init_lm:
     mov fs, ax                    ; Set the F-segment to the A-register.
     mov gs, ax                    ; Set the G-segment to the A-register.
     mov ss, ax                    ; Set the stack segment to the A-register.
-    ; mov edi, 0xB8000              ; Set the destination index to 0xB8000.
     mov rbp, 0x90000
     mov rsp, rbp
     call BEGIN_LM
