@@ -15,7 +15,7 @@ setup_paging:
     ; PDT[0] -> PT.
     ; PT -> 0x00000000 - 0x00200000.
     ; First we will clear the tables:
-    mov edi, 0x1000    ; Set the destination index to 0x1000.
+    mov edi, 0x100000    ; Set the destination index to 0x1000.
     mov cr3, edi       ; Set control register 3 to the destination index.
     xor eax, eax       ; Nullify the A-register.
     mov ecx, 4096      ; Set the C-register to 4096.
