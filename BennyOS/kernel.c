@@ -1,5 +1,5 @@
 void main(){
-    const char *string = "BEN";
+    const char *string = "Hello from the kernel!";
     volatile char *video = (volatile char*)0xb8000;
     while( *string != 0 )
     {
