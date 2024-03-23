@@ -18,14 +18,14 @@ jmp $ ; Hang
 
 ; Include files
 ; %include "16bit/print_utils.asm"
-%include "16bit/disk_load.asm"
-%include "32bit/gdt.asm"
-%include "32bit/switch_to_32bit.asm"
-%include "32bit/print_utils.asm"
-%include "32bit/setup_paging.asm"
-%include "64bit/switch_to_64bit.asm"
-%include "64bit/gdt.asm"
-%include "64bit/print_utils.asm"
+%include "../boot/16bit/disk_load.asm"
+%include "../boot/32bit/gdt.asm"
+%include "../boot/32bit/switch_to_32bit.asm"
+%include "../boot/32bit/print_utils.asm"
+%include "../boot/32bit/setup_paging.asm"
+%include "../boot/64bit/switch_to_64bit.asm"
+%include "../boot/64bit/gdt.asm"
+%include "../boot/64bit/print_utils.asm"
 
 [bits 16]
 load_kernel:

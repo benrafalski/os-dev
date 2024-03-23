@@ -15,6 +15,6 @@ init_lm:
     mov fs, ax                    ; Set the F-segment to the A-register.
     mov gs, ax                    ; Set the G-segment to the A-register.
     mov ss, ax                    ; Set the stack segment to the A-register.
-    mov rbp, 0x90000
+    mov rbp, 0x8000
     mov rsp, rbp
     call BEGIN_LM
