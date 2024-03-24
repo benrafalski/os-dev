@@ -46,7 +46,7 @@ BEGIN_PM:
 ; Use 64-bit.
 [BITS 64]
 BEGIN_LM:
-    call clear_screen
+    ; call clear_screen
 
     call KERNEL_OFFSET
 

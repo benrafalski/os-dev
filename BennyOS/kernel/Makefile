@@ -1,16 +1,18 @@
+HEADERS = $(wildcard ./print/*.h)
+
 all: ../bin/os-image
 
 ../bin/os-image: ../bin/boot_sector.bin ../bin/kernel.bin
 	cat $^ > $@
 
-../bin/kernel.bin: ../bin/kernel.o
+../bin/kernel.bin: ../bin/kernel_entry.o ../bin/kernel.o
 	ld -o $@ -Ttext 0x9000 $^ --oformat binary
 
-../bin/kernel.o: kmain.c ./print/colors.h ./print/print.h
+../bin/kernel.o: kmain.c ${HEADERS}
 	gcc -ffreestanding -c $< -o $@ 
 
-# kernel_entry.o: kernel_entry.asm
-# 	nasm $< -f elf -o $@
+../bin/kernel_entry.o: kernel_entry.asm
+	nasm $< -f elf64 -o $@
 
 ../bin/boot_sector.bin: ../boot/new_boot.asm
 	nasm $< -f bin -o $@ 
