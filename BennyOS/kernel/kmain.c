@@ -4,5 +4,5 @@
 void main(){
     set_color(WHITE_FGD, BLUE_BGD);
     clear_screen();
-    puts("Hello from the kernel!");
+    kputs("Hello from the kernel!");
 }
