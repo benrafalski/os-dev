@@ -1,17 +1,29 @@
 
 #include "print/print.h"
 #include "interrupts/init_idt.h"
+#include "cpuid.h"
 
 
-void main(){
-    set_color(WHITE_FGD, BLUE_BGD);
-    clear_screen();
-    kputs("Hello from the kernel!");
-    idt_init();
-    kputs("IDT loaded...");
-    
+#define APIC_MASK 1 << 9
+
+static int check_apic(void){
+    uint32_t unused, edx;
+    __cpuid(1, unused, unused, unused, edx);
+    return edx & APIC_MASK;
 }
 
+void main()
+{
+    set_color(WHITE_FGD, BLUE_BGD);
+    clear_screen();
+    if(check_apic()){
+        kputs("Hello from the kernel! APIC IS enabled");
+    }else{
+        kputs("Hello from the kernel! APIC NOT enabled");
+    }
+    
+    idt_init();
+}
 
 // Phase 0: Introduction
 // 1. Welcome to Operating Systems Development
