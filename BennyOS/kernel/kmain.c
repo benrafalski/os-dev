@@ -1,11 +1,15 @@
 
 #include "print/print.h"
+#include "interrupts/init_idt.h"
 
 
 void main(){
     set_color(WHITE_FGD, BLUE_BGD);
     clear_screen();
     kputs("Hello from the kernel!");
+    idt_init();
+    kputs("IDT loaded...");
+    
 }
 
 
