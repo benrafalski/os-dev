@@ -1,5 +1,6 @@
 #include "colors.h"
 #include "portio.h"
+#include <stdint.h>
 
 #define VIDEO_MEMORY 0xB8000
 #define VGA_HEIGHT 25
@@ -7,7 +8,7 @@
 #define REG_SCREEN_CTRL 0x3D4
 #define REG_SCREEN_DATA 0x3D5
 
-unsigned char color = WHITE_FGD | BLUE_BGD;
+uint8_t color = WHITE_FGD | BLUE_BGD;
 
 // A utility function to reverse a string
 void reverse(char str[], int length)
@@ -160,16 +161,15 @@ void print_at(const char *message, int row, int col)
 
 void kputs(const char *string)
 {
-    
-    int row = get_cursor_row();
-    int col = get_cursor_col();
+    uint16_t row = get_cursor_row();
+    uint16_t col = get_cursor_col();
     print_at(string, row, col);
 }
 
 void clear_screen()
 {
-    int row = 0;
-    int col = 0;
+    uint16_t row = 0;
+    uint16_t col = 0;
 
     for (row = 0; row < VGA_HEIGHT; row++)
     {
