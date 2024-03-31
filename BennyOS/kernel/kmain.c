@@ -1,6 +1,7 @@
 
 #include "print/print.h"
 #include "interrupts/init_idt.h"
+#include "interrupts/pic.h"
 #include "cpuid.h"
 
 
@@ -22,9 +23,14 @@ void main()
         kputs("Hello from the kernel! APIC NOT allowed");
     }
 
+    // remap PIC
+    pic_disable();
+    pic_remapping(0x20);
+
+    // intialize the IDT
     idt_init();
 
-    __asm__ __volatile__("int $0x2");
+    // __asm__ __volatile__("int $0x2");
 
     kputs("Exception handled!");
 }
