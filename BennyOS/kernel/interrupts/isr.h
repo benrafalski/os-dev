@@ -1,9 +1,49 @@
 #include <stdint.h>
 
-__attribute__((noreturn)) void exception_handler(void);
-void exception_handler()
+
+typedef struct {
+    struct {
+        uint64_t    cr4;
+        uint64_t    cr3;
+        uint64_t    cr2;
+        uint64_t    cr0;
+    } control_registers;
+
+    struct {
+        uint64_t    r15;
+        uint64_t    r14;
+        uint64_t    r13;
+        uint64_t    r12;
+        uint64_t    r11;
+        uint64_t    r10;
+        uint64_t    r9;
+        uint64_t    r8;
+        uint64_t    rdi;
+        uint64_t    rsi;
+        uint64_t    rdx;
+        uint64_t    rcx;
+        uint64_t    rbx;
+        uint64_t    rax;
+    } general_registers;
+	
+    struct {
+        uint64_t    rbp;
+        uint64_t    vector;
+        uint64_t    error_code;
+        uint64_t    rip;
+        uint64_t    cs;
+        uint64_t    rflags;
+        uint64_t    rsp;
+        uint64_t    dss;
+    } base_frame;
+} isr_frame_t;
+
+
+
+
+__attribute__((noreturn)) void exception_handler(isr_frame_t* frame);
+void exception_handler(isr_frame_t* frame)
 {
-    unsigned long long src = 1;
     unsigned long long dst;
 
     __asm__ volatile("movq %%rax, %0;"
@@ -21,3 +61,43 @@ void exception_handler()
         __asm__ volatile("cli; hlt");
     }
 }
+
+void print_exception_msg(const char* msg){
+    uint8_t color = get_color();
+    set_color(RED_FGD, BLUE_BGD);
+    kputs(msg);
+    set_color(color & 0xf, color & 0xf0);
+}
+
+// FAULTS: $rip will contain the value of the instruction that caused the exception
+// TRAPS: $rip will contain the value of the instruction after the instruction that caused the exception
+
+
+// TODO: figure out how to make it safe
+// Division Error (Fault)
+//      Occurs when dividing any number by 0 using the DIV or IDIV instruction
+void exception_handler_0(isr_frame_t* frame);
+void exception_handler_0(isr_frame_t* frame){
+    print_exception_msg("Exception 0 caught (fault): divide by zero, continuing...");
+    frame->base_frame.rip += 1;
+}
+
+// Debug (Trap)
+//      Instruction fetch breakpoint (Fault)
+//      General detect condition (Fault)
+//      Data read or write breakpoint (Trap)
+//      I/O read or write breakpoint (Trap)
+//      Single-step (Trap)
+//      Task-switch (Trap)   
+void exception_handler_1(isr_frame_t* frame);
+void exception_handler_1(isr_frame_t* frame){
+    print_exception_msg("Exception 1 caught (trap): debug interrupt, continuing...");
+}
+
+// https://wiki.osdev.org/Non_Maskable_Interrupt
+void exception_handler_2(isr_frame_t* frame);
+void exception_handler_2(isr_frame_t* frame){
+    print_exception_msg("Exception 2 caught (interrupt): non-maskable interrupt, continuing...");
+}
+
+

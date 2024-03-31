@@ -71,6 +71,10 @@ void set_color(unsigned char foreground, unsigned char background)
 {
     color = foreground | background;
 }
+uint8_t get_color()
+{
+    return color;
+}
 
 int get_screen_offset(int row, int col)
 {

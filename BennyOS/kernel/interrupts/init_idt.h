@@ -5,7 +5,6 @@
 
 #define GDT_OFFSET_KERNEL_CODE 0x08
 
-
 static bool vectors[IDT_MAX_DESCRIPTORS];
 
 void idt_set_descriptor(uint8_t vector, void *isr, uint8_t flags);
@@ -34,14 +33,12 @@ void idt_init()
     
     for (uint8_t vector = 0; vector < 32; vector++)
     {
-        idt_set_descriptor(vector, isr_stub_table[vector], 0x8E);
+        idt_set_descriptor(vector, isr_stub_table[vector], PRESENT|DPL_0|INT_GATE);
         vectors[vector] = true;
     }
 
     
 
     __asm__ volatile("lidt %0" : : "m"(idtr)); // load the new IDT
-    kputs("hi1");   // does print
-    __asm__ volatile("sti");                   // set the interrupt flag
-    kputs("hi2");   // doesn't print
+    // __asm__ volatile("sti");                   // set the interrupt flag
 }

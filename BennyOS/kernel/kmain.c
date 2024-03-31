@@ -17,12 +17,16 @@ void main()
     set_color(WHITE_FGD, BLUE_BGD);
     clear_screen();
     if(check_apic()){
-        kputs("Hello from the kernel! APIC IS enabled");
+        kputs("Hello from the kernel! APIC IS allowed");
     }else{
-        kputs("Hello from the kernel! APIC NOT enabled");
+        kputs("Hello from the kernel! APIC NOT allowed");
     }
-    
+
     idt_init();
+
+    __asm__ __volatile__("int $0x2");
+
+    kputs("Exception handled!");
 }
 
 // Phase 0: Introduction
