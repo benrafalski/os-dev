@@ -1,5 +1,6 @@
 #include "colors.h"
 #include "portio.h"
+#include "string.h"
 #include <stdint.h>
 
 #define VIDEO_MEMORY 0xB8000
@@ -10,63 +11,6 @@
 
 uint8_t color = WHITE_FGD | BLUE_BGD;
 
-// A utility function to reverse a string
-void reverse(char str[], int length)
-{
-    int start = 0;
-    int end = length - 1;
-    while (start < end)
-    {
-        char temp = str[start];
-        str[start] = str[end];
-        str[end] = temp;
-        end--;
-        start++;
-    }
-}
-char *citoa(int num, char *str, int base)
-{
-    int i = 0;
-    int isNegative = 0;
-
-    /* Handle 0 explicitly, otherwise empty string is
-     * printed for 0 */
-    if (num == 0)
-    {
-        str[i++] = '0';
-        str[i] = '\0';
-        return str;
-    }
-
-    // In standard itoa(), negative numbers are handled
-    // only with base 10. Otherwise numbers are
-    // considered unsigned.
-    if (num < 0 && base == 10)
-    {
-        isNegative = 1;
-        num = -num;
-    }
-
-    // Process individual digits
-    while (num != 0)
-    {
-        int rem = num % base;
-        str[i++] = (rem > 9) ? (rem - 10) + 'a' : rem + '0';
-        num = num / base;
-    }
-
-    // If number is negative, append '-'
-    if (isNegative)
-        str[i++] = '-';
-
-    str[i] = '\0'; // Append string terminator
-
-    // Reverse the string
-    reverse(str, i);
-
-    return str;
-}
-
 void set_color(unsigned char foreground, unsigned char background)
 {
     color = foreground | background;
@@ -76,109 +20,117 @@ uint8_t get_color()
     return color;
 }
 
-int get_screen_offset(int row, int col)
+void enable_cursor(uint8_t cursor_start, uint8_t cursor_end)
 {
-    // For example, if I want to set a character at
-    // row 3, column 4 of the display, then the
-    // character cell of that will be at a (decimal)
-    // offset of 488 ((3 * 80 (i.e. the the row width) + 4) * 2 = 488)
-    // from the start
-    // of video memory.
-
-    int offset = ((row * VGA_WIDTH) + col) * 2;
-    return offset;
+	outb(REG_SCREEN_CTRL, 0x0A);
+	outb(REG_SCREEN_DATA, (inb(REG_SCREEN_DATA) & 0xC0) | cursor_start);
+ 
+	outb(REG_SCREEN_CTRL, 0x0B);
+	outb(REG_SCREEN_DATA, (inb(REG_SCREEN_DATA) & 0xE0) | cursor_end);
 }
 
-// https://wiki.osdev.org/Text_Mode_Cursor
-int get_cursor()
+void disable_cursor()
 {
-    outb(REG_SCREEN_CTRL, 0x0E);
-    int offset = inb(REG_SCREEN_DATA);
+	outb(REG_SCREEN_CTRL, 0x0A);
+	outb(REG_SCREEN_DATA, 0x20);
+}
+
+void update_cursor(int x, int y)
+{
+	uint16_t pos = y * VGA_WIDTH + x;
+ 
+	outb(REG_SCREEN_CTRL, 0x0F);
+	outb(REG_SCREEN_DATA, (uint8_t) (pos & 0xFF));
+	outb(REG_SCREEN_CTRL, 0x0E);
+	outb(REG_SCREEN_DATA, (uint8_t) ((pos >> 8) & 0xFF));
+}
+
+uint16_t get_cursor_position(void)
+{
+    uint16_t pos = 0;
     outb(REG_SCREEN_CTRL, 0x0F);
-    offset += inw(REG_SCREEN_DATA);
-    return offset * 2;
-
-}
-
-void set_cursor(int offset)
-{
-    offset /= 2;
+    pos |= inb(REG_SCREEN_DATA);
     outb(REG_SCREEN_CTRL, 0x0E);
-    outb(REG_SCREEN_DATA, 0);
-    outb(REG_SCREEN_CTRL, 0x0F);
-    outw(REG_SCREEN_DATA, offset);
+    pos |= ((uint16_t)inb(REG_SCREEN_DATA)) << 8;
+    return pos;
 }
 
-uint32_t get_cursor_row()
-{
-    uint32_t offset = get_cursor();
-    return (offset / VGA_WIDTH) / 2;
+void print_char(uint8_t c, int x, int y){
+    volatile uint16_t * where;
+    where = (volatile uint16_t *)VIDEO_MEMORY + (y * VGA_WIDTH + x) ;
+    *where = c | (color << 8);
 }
 
-uint32_t get_cursor_col()
+
+void kputs(const char *str)
 {
-    uint32_t offset = get_cursor();
-    return (offset % VGA_WIDTH) / 2;
-}
+    int len = strlen(str);
+    uint16_t pos = get_cursor_position();
+    int x = pos % VGA_WIDTH;
+    int y = pos / VGA_WIDTH;
 
-void print_char(unsigned char character, int row, int col)
-{
-    int offset;
-    unsigned char *vidmem = (unsigned char *)VIDEO_MEMORY;
-    if (col >= 0 && row >= 0)
-    {
-        offset = get_screen_offset(row, col);
-    }
-    else
-    {
-        offset = get_cursor();
-    }
+    while(*str != '\0'){
 
-    vidmem[offset] = character;
-    vidmem[offset + 1] = color;
-    offset += 2;
-    // offset = handle_scrolling(offset);
-    set_cursor(offset);
-}
-
-void print_at(const char *message, int row, int col)
-{
-    if (col >= 0 && row >= 0)
-    {
-        set_cursor(get_screen_offset(row, col));
-    }
-
-    // char digits[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
-    int i = 0;
-    while (message[i] != 0)
-    {
-        if(message[i] == '\n'){
-            col = 0;
-            row++;
-
-        } else{
-            print_char(message[i], row, col);
-            col++;
+        if(*str == '\n'){
+            y++;
+            x = 0;
+            str++;
+            continue;
         }
 
-        int off = get_screen_offset(row, col);
-        set_cursor(off);
-        i++;
-        
+        print_char(*str, x, y);
+        x++;
+        str++;
     }
-    // row++;
-    // set_cursor(get_screen_offset(row, 0));
+    y += (len / VGA_WIDTH) + 1;
+    update_cursor(0, y);
 }
 
-void kputs(const char *string)
-{
-    uint32_t row = get_cursor_row();
-    uint32_t col = get_cursor_col();
+void kprintf(const char* str, int arg){
+    int len = strlen(str) - 2;
+    uint16_t pos = get_cursor_position();
+    int x = pos % VGA_WIDTH;
+    int y = pos / VGA_WIDTH;
 
-    // print_char('0' + row, 10, 5);
-    // print_char('0' + col, 11, 5);
+    while(*str != '\0'){
+        if(*str == '%'){
+            char *trash;
+            char *num;
+            
+            str++;
+            if(*str == 'd'){
+                // print int
+                num = citoa(arg, trash, 10);
+                // len += strlen(num);
+                
+            }
+            else if(*str == 'x'){
+                // print hex
+                num = citoa(arg, trash, 16);
+                // len += strlen(num);
+            }
 
-    print_at(string, row, col);
+            while(*num != '\0'){
+                print_char(*num, x, y);
+                x++;
+                num++;
+            }
+            str++;
+        }
+
+        if(*str == '\n'){
+            y++;
+            x = 0;
+            str++;
+            continue;
+        }
+
+        print_char(*str, x, y);
+        x++;
+        str++;
+    }  
+
+    update_cursor(x-1, y);
 }
 
 void clear_screen()
@@ -194,5 +146,5 @@ void clear_screen()
         }
     }
 
-    set_cursor(get_screen_offset(0, 0));
+    update_cursor(0, 0);
 }

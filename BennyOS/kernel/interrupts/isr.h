@@ -128,7 +128,7 @@ void exception_handler_33(isr_frame_t* frame){
         break;
     
     default:
-        clear_screen();
+        // clear_screen();
         break;
     }
 
