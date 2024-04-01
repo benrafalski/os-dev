@@ -108,10 +108,22 @@ isr_stub_2:
     call exception_handler_2
     stub_postwork
 
+isr_stub_32:
+    mov rax, 32
+    call exception_handler
+    iretq
+
+
+isr_stub_33:
+    stub_prework
+    call exception_handler_33
+    stub_postwork
+
 
 extern exception_handler_0
 extern exception_handler_1
 extern exception_handler_2
+extern exception_handler_33
 extern exception_handler
 ; isr_no_err_stub 0
 ; isr_no_err_stub 1
@@ -149,7 +161,7 @@ isr_no_err_stub 31
 global isr_stub_table
 isr_stub_table:
 %assign i 0 
-%rep    32 
+%rep    34 
     dq isr_stub_%+i ; use DQ instead if targeting 64-bit
-%assign i i+1 
+%assign i i+1
 %endrep

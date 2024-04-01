@@ -85,7 +85,7 @@ int get_screen_offset(int row, int col)
     // from the start
     // of video memory.
 
-    int offset = (row * VGA_WIDTH + col) * 2;
+    int offset = ((row * VGA_WIDTH) + col) * 2;
     return offset;
 }
 
@@ -109,15 +109,15 @@ void set_cursor(int offset)
     outw(REG_SCREEN_DATA, offset);
 }
 
-int get_cursor_row()
+uint32_t get_cursor_row()
 {
-    int offset = get_cursor();
+    uint32_t offset = get_cursor();
     return (offset / VGA_WIDTH) / 2;
 }
 
-int get_cursor_col()
+uint32_t get_cursor_col()
 {
-    int offset = get_cursor();
+    uint32_t offset = get_cursor();
     return (offset % VGA_WIDTH) / 2;
 }
 
@@ -147,26 +147,37 @@ void print_at(const char *message, int row, int col)
     {
         set_cursor(get_screen_offset(row, col));
     }
+
+    // char digits[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
     int i = 0;
     while (message[i] != 0)
     {
         if(message[i] == '\n'){
-            col = -1;
+            col = 0;
             row++;
-            i++;
+
         } else{
-            print_char(message[i++], row, col);
+            print_char(message[i], row, col);
+            col++;
         }
-        set_cursor(get_screen_offset(row, col++));
+
+        int off = get_screen_offset(row, col);
+        set_cursor(off);
+        i++;
+        
     }
-    row++;
-    set_cursor(get_screen_offset(row, 0));
+    // row++;
+    // set_cursor(get_screen_offset(row, 0));
 }
 
 void kputs(const char *string)
 {
-    uint16_t row = get_cursor_row();
-    uint16_t col = get_cursor_col();
+    uint32_t row = get_cursor_row();
+    uint32_t col = get_cursor_col();
+
+    // print_char('0' + row, 10, 5);
+    // print_char('0' + col, 11, 5);
+
     print_at(string, row, col);
 }
 

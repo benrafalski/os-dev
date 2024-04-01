@@ -56,3 +56,17 @@ void pic_disable(void) {
     outb(MASTER_PIC_DATA, 0xFF);
     outb(SLAVE_PIC_DATA, 0xFF);
 }
+
+void pic_clear_mask(uint8_t irq) {
+    uint16_t port;
+    uint8_t value;
+ 
+    if(irq < 8) {
+        port = MASTER_PIC_DATA;
+    } else {
+        port = SLAVE_PIC_DATA;
+        irq -= 8;
+    }
+    value = inb(port) & ~(1 << irq);
+    outb(port, value);        
+}

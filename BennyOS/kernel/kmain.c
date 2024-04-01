@@ -1,9 +1,8 @@
 
 #include "print/print.h"
+// #include "interrupts/pic.h"
 #include "interrupts/init_idt.h"
-#include "interrupts/pic.h"
 #include "cpuid.h"
-
 
 #define APIC_MASK 1 << 9
 
@@ -18,10 +17,41 @@ void main()
     set_color(WHITE_FGD, BLUE_BGD);
     clear_screen();
     if(check_apic()){
-        kputs("Hello from the kernel! APIC IS allowed");
+        kputs("Hello from the kernel! APIC IS allowed\n");
     }else{
-        kputs("Hello from the kernel! APIC NOT allowed");
+        kputs("Hello from the kernel! APIC NOT allowed\n");
     }
+
+    kputs("line2\n");
+    kputs("line3\n");
+
+    // int offset = get_cursor();
+    char * str;
+    // str = citoa(offset, str, 10);
+    // // print_at(str, 10, 10);
+
+    // print_char('0'-str[0], 10, 10);
+    // print_char('0'-str[1], 10, 11);
+    // print_char('0'-str[2], 10, 12);
+
+
+    kputs("line4\n");
+
+    // int offset = get_cursor_row();
+    // print_char('0'-offset, 10, 5);
+
+    
+
+    
+    int offset = get_cursor();
+    str = citoa(offset, str, 10);
+    print_at(str, 11, 10);
+
+
+    // kputs("line5");
+
+    // print_at("here", 5, 0);
+    // print_at("here", 6, 0);
 
     // remap PIC
     pic_disable();
@@ -30,9 +60,21 @@ void main()
     // intialize the IDT
     idt_init();
 
+    // enable keyboard interrupts
+    pic_clear_mask(1);
+    pic_clear_mask(2);
+    idt_set_descriptor(0x21, isr_stub_table[0x21], PRESENT|DPL_0|INT_GATE);
+
+    while(true);
+
+
     // __asm__ __volatile__("int $0x2");
 
-    kputs("Exception handled!");
+    // kputs("Exception handled!");
+
+    for(;;) {
+        asm("hlt");
+    }
 }
 
 // Phase 0: Introduction

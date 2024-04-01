@@ -1,5 +1,5 @@
 #include <stdint.h>
-
+#include "pic.h"
 
 typedef struct {
     struct {
@@ -38,7 +38,10 @@ typedef struct {
     } base_frame;
 } isr_frame_t;
 
-
+typedef struct {
+    uint8_t scan_code;
+    uint8_t key;
+} scancode_t;
 
 
 __attribute__((noreturn)) void exception_handler(isr_frame_t* frame);
@@ -78,7 +81,7 @@ void print_exception_msg(const char* msg){
 //      Occurs when dividing any number by 0 using the DIV or IDIV instruction
 void exception_handler_0(isr_frame_t* frame);
 void exception_handler_0(isr_frame_t* frame){
-    print_exception_msg("Exception 0 caught (fault): divide by zero, continuing...");
+    print_exception_msg("Exception 0 caught (fault): divide by zero, continuing...\n");
     frame->base_frame.rip += 1;
 }
 
@@ -91,13 +94,46 @@ void exception_handler_0(isr_frame_t* frame){
 //      Task-switch (Trap)   
 void exception_handler_1(isr_frame_t* frame);
 void exception_handler_1(isr_frame_t* frame){
-    print_exception_msg("Exception 1 caught (trap): debug interrupt, continuing...");
+    print_exception_msg("Exception 1 caught (trap): debug interrupt, continuing...\n");
 }
 
 // https://wiki.osdev.org/Non_Maskable_Interrupt
 void exception_handler_2(isr_frame_t* frame);
 void exception_handler_2(isr_frame_t* frame){
-    print_exception_msg("Exception 2 caught (interrupt): non-maskable interrupt, continuing...");
+    print_exception_msg("Exception 2 caught (interrupt): non-maskable interrupt, continuing...\n");
 }
 
+// Keyboard Interrupt
+void exception_handler_33(isr_frame_t* frame);
+void exception_handler_33(isr_frame_t* frame){
+    // kputs("Keyboard interrupt!");
+    // frame->base_frame.rip += 1;
+    // key = 'l';
+
+    scancode_t table[1];
+    scancode_t k;
+    // k.scan_code = 0x25;
+    // k.key = 'k'
+
+
+
+    unsigned char scan_code = inb(0x60);
+    char* str;
+    // str[0] = scan_code;
+
+    switch (scan_code)
+    {
+    case 0x21:
+        kputs("F");
+        break;
+    
+    default:
+        clear_screen();
+        break;
+    }
+
+    
+    pic_send_eoi(1);
+
+}
 
