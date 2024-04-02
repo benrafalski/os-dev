@@ -6,10 +6,10 @@ all: ../bin/os-image
 	cat $^ > $@
 
 ../bin/kernel.bin: ../bin/kernel_entry.o ../bin/kernel.o ../bin/isr.o
-	ld -o $@ -Ttext 0x9000 $^ --oformat binary
+	ld -o $@ -Ttext 0x1000 $^ --oformat binary
 
 ../bin/kernel.o: kmain.c ${HEADERS}
-	gcc -ffreestanding -c $< -o $@ 
+	gcc -g -ffreestanding -c $< -o $@ 
 
 ../bin/kernel_entry.o: kernel_entry.asm
 	nasm $< -f elf64 -o $@

@@ -1,6 +1,8 @@
 #include <stdint.h>
-#include "../print/print.h"
+#include "../print/keyboard.h"
 #include "pic.h"
+
+
 
 typedef struct
 {
@@ -49,17 +51,6 @@ typedef struct
     uint8_t key;
 } scancode_t;
 
-char scancode_ascii(const char scan_code)
-{
-    
-
-    if (scan_code >= 0x1E && scan_code <= 0x29){
-        char *str = "asdfghjkl";
-        return str[scan_code - 0x1E];
-    }else{
-        return 0;
-    }
-}
 
 __attribute__((noreturn)) void exception_handler(isr_frame_t *frame);
 void exception_handler(isr_frame_t *frame)
@@ -126,37 +117,7 @@ void exception_handler_2(isr_frame_t *frame)
 void exception_handler_33(isr_frame_t *frame);
 void exception_handler_33(isr_frame_t *frame)
 {
-    // kputs("Keyboard interrupt!");
-
-    // char s1[13] = "1234567890-=";
-    // char* s2 = "qwertyuiop[]";
-    // char* s3 = "asdfghjkl;'`";
-    // char* s4 = "zxcvbnm,./";
-
-    uint16_t pos = get_cursor_position();
-    int x = pos % VGA_WIDTH;
-    int y = pos / VGA_WIDTH;
-
-    unsigned char scan_code = inb(0x60);
-    char key = scancode_ascii(scan_code);
-    if(key){
-        print_char(key, x, y);
-        update_cursor(x+1, y);
-    }
-
-    
-    
-
+    read_key();
     pic_send_eoi(1);
 }
 
-// "1234567890-="
-// // 0xe = backspace
-// // 0xf = tab
-// "qwertyuiop[]"
-// // 0x1c = enter
-// // 0x1d = left ctrl
-// "asdfghjkl;'`"
-// // 0x2A	left shift pressed
-// // 0x2B	\ pressed
-// "zxcvbnm,./"

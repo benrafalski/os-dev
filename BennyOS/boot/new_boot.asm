@@ -1,6 +1,6 @@
 [org 0x7c00]
 ; [bits 16]
-KERNEL_OFFSET equ 0x9000
+KERNEL_OFFSET equ 0x1000
 
 mov [BOOT_DRIVE], dl
 
@@ -29,6 +29,9 @@ jmp $ ; Hang
 
 [bits 16]
 load_kernel:
+; load the kernel at offset 77000
+    ; mov ax, 0x5000
+    ; mov es, ax
     mov bx, KERNEL_OFFSET
     mov dh, 15
     mov dl, [BOOT_DRIVE]
@@ -48,7 +51,9 @@ BEGIN_PM:
 BEGIN_LM:
     call clear_screen
 
+
     call KERNEL_OFFSET
+    ; jmp 59000h
 
     jmp $
 

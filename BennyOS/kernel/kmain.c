@@ -1,5 +1,5 @@
 
-// #include "print/print.h"
+#include "print/print.h"
 #include "interrupts/init_idt.h"
 #include "cpuid.h"
 
@@ -16,7 +16,9 @@ void main()
     set_color(WHITE_FGD, BLUE_BGD);
     clear_screen();
     if(check_apic()){
-        kputs("Hello from the kernel! APIC IS allowed");
+        kputs("+--------------------------------------+");
+        kputs("|Hello from the kernel! APIC IS allowed|");
+        kputs("+--------------------------------------+");
     }else{
         kputs("Hello from the kernel! APIC NOT allowed");
     }
