@@ -1,5 +1,5 @@
 
-#include "print/print.h"
+// #include "print/print.h"
 #include "interrupts/init_idt.h"
 #include "cpuid.h"
 
@@ -21,7 +21,7 @@ void main()
         kputs("Hello from the kernel! APIC NOT allowed");
     }
 
-    kprintf("character : %x", 0x90);
+    // kprintf("%x", 'h');
 
     // remap PIC
     pic_disable();
