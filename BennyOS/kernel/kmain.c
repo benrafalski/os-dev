@@ -15,7 +15,10 @@ void main()
 {
     set_color(WHITE_FGD, BLUE_BGD);
     clear_screen();
+    // good
     if(check_apic()){
+        // these strings are at 0x3118 when clearscreen is called is asm these are nowhere to be found
+        // on the good version they are located at 0x2118...hmmm
         kputs("+--------------------------------------+");
         kputs("|Hello from the kernel! APIC IS allowed|");
         kputs("+--------------------------------------+");
