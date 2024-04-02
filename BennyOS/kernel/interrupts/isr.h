@@ -110,30 +110,48 @@ void exception_handler_33(isr_frame_t* frame){
     // frame->base_frame.rip += 1;
     // key = 'l';
 
-    scancode_t table[1];
-    scancode_t k;
-    // k.scan_code = 0x25;
-    // k.key = 'k'
+    // char* scancodes[4] = {
+        
+    // };
+
+    // char* s1 = "1234567890-=";
+    // char* s2 = "qwertyuiop[]";
+    // char* s3 = "asdfghjkl;'`";
+    // char* s4 = "zxcvbnm,./";
+
+
+    // 0xe = backspace
+    // 0xf = tab
+    // 0x1c = enter
+    // 0x1d = left ctrl
+    // 0x2A	left shift pressed
+    // 0x2B	\ pressed
 
 
 
-    unsigned char scan_code = inb(0x60);
-    char* str;
-    // str[0] = scan_code;
+    // unsigned char scan_code = inb(0x60);
+    // if(scan_code >= 0x01 && scan_code <= 0x0C){
 
-    switch (scan_code)
-    {
-    case 0x21:
-        kputs("F");
-        break;
-    
-    default:
-        // clear_screen();
-        break;
-    }
+    // }
 
     
     pic_send_eoi(1);
 
 }
+
+
+
+
+// "1234567890-="
+// // 0xe = backspace
+// // 0xf = tab
+// "qwertyuiop[]"
+// // 0x1c = enter
+// // 0x1d = left ctrl
+// "asdfghjkl;'`"
+// // 0x2A	left shift pressed
+// // 0x2B	\ pressed
+// "zxcvbnm,./"
+
+
 

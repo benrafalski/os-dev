@@ -109,6 +109,15 @@ void kprintf(const char* str, int arg){
                 num = citoa(arg, trash, 16);
                 // len += strlen(num);
             }
+            else if(*str == 'c'){
+                // print char
+                print_char('h', x, y);
+                x++;
+                str++;
+                // continue;
+                return;
+                // len += strlen(num);
+            }
 
             while(*num != '\0'){
                 print_char(*num, x, y);

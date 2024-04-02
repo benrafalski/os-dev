@@ -21,6 +21,8 @@ void main()
         kputs("Hello from the kernel! APIC NOT allowed");
     }
 
+    kprintf("character : %x", 0x90);
+
     // remap PIC
     pic_disable();
     pic_remapping(0x20);
