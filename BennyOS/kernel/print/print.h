@@ -62,15 +62,6 @@ void print_char(const char c, int x, int y){
     // return;
 }
 
-// void kprintc(const char  c){
-//     uint16_t pos = get_cursor_position();
-//     int x = pos % VGA_WIDTH;
-//     int y = pos / VGA_WIDTH;
-
-//     // print_char(c, 10, 10);
-// }
-
-
 void kputs(const char *str)
 {
     int len = strlen(str);
@@ -95,57 +86,61 @@ void kputs(const char *str)
     update_cursor(0, y);
 }
 
-// void kprintf(const char* str, int arg){
-//     int len = strlen(str) - 2;
-//     uint16_t pos = get_cursor_position();
-//     int x = pos % VGA_WIDTH;
-//     int y = pos / VGA_WIDTH;
+void kprintf(const char* str, int arg){
+    int len = strlen(str) - 2;
+    uint16_t pos = get_cursor_position();
+    int x = pos % VGA_WIDTH;
+    int y = pos / VGA_WIDTH;
 
-//     while(*str != '\0'){
-//         if(*str == '%'){
-//             char *trash;
-//             char *num;
+    while(*str != '\0'){
+        if(*str == '%'){
+            char *trash;
+            char *num;
             
-//             str++;
-//             if(*str == 'd'){
-//                 // print int
-//                 num = citoa(arg, trash, 10);
-//                 // len += strlen(num);
+            str++;
+            if(*str == 'd'){
+                // print int
+                num = citoa(arg, trash, 10);
+                while(*num != '\0'){
+                    print_char(*num, x, y);
+                    x++;
+                    num++;
+                }
                 
-//             }
-//             else if(*str == 'x'){
-//                 // print hex
-//                 num = citoa(arg, trash, 16);
-//                 // len += strlen(num);
+            }
+            else if(*str == 'x'){
+                // print hex
+                num = citoa(arg, trash, 16);
+                // len += strlen(num);
+                while(*num != '\0'){
+                    print_char(*num, x, y);
+                    x++;
+                    num++;
+                }
                 
-//             }
-//             // else if(*str == 'c'){
-//             //     kputs("here");
-//             // }
-//             while(*num != '\0'){
-//                 print_char(*num, x, y);
-//                 x++;
-//                 num++;
-//             }
+            }
+            else if(*str == 'c'){
+                print_char((char)arg, x, y);
+                x++;
+            }
+        
+            str++;
+        }
 
-            
-//             str++;
-//         }
+        if(*str == '\n'){
+            y++;
+            x = 0;
+            str++;
+            continue;
+        }
 
-//         if(*str == '\n'){
-//             y++;
-//             x = 0;
-//             str++;
-//             continue;
-//         }
+        print_char(*str, x, y);
+        x++;
+        str++;
+    }  
 
-//         print_char(*str, x, y);
-//         x++;
-//         str++;
-//     }  
-
-//     update_cursor(x-1, y);
-// }
+    update_cursor(x-1, y);
+}
 
 void clear_screen()
 {
@@ -156,7 +151,7 @@ void clear_screen()
     {
         for (col = 0; col < VGA_WIDTH; col++)
         {
-            print_char(' ', row, col);
+            print_char(' ', col, row);
         }
     }
 

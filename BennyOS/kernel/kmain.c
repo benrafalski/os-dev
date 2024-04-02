@@ -13,7 +13,8 @@ static int check_apic(void){
 
 void main()
 {
-    set_color(WHITE_FGD, BLUE_BGD);
+    // set_color(WHITE_FGD, BLUE_BGD);
+    set_color(LIGHT_GREEN_FGD, DARK_GRAY_BGD);
     clear_screen();
     // good
     if(check_apic()){
@@ -21,12 +22,14 @@ void main()
         // on the good version they are located at 0x2118...hmmm
         kputs("+--------------------------------------+");
         kputs("|Hello from the kernel! APIC IS allowed|");
-        kputs("+--------------------------------------+");
+        kputs("+--------------------------------------+\n");
     }else{
+        kputs("+--------------------------------------+");
         kputs("Hello from the kernel! APIC NOT allowed");
+        kputs("+--------------------------------------+\n");
     }
 
-    // kprintf("%x", 'h');
+    kprintf(">:  ", 0);
 
     // remap PIC
     pic_disable();

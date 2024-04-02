@@ -33,7 +33,7 @@ load_kernel:
     ; mov ax, 0x5000
     ; mov es, ax
     mov bx, KERNEL_OFFSET
-    mov dh, 15
+    mov dh, 20  ; issue... it wasn't loading the rest of the kernel...
     mov dl, [BOOT_DRIVE]
     call disk_load
 

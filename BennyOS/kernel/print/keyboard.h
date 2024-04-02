@@ -1,6 +1,11 @@
 #define PS2_RW_DATA 0x60
 
-#define BACKSPACE 0x0E
+#define BACKSPACE   0x0E
+#define SPACE       0x39
+#define ENTER       0x1C
+
+
+int buffer = 0;
 
 char scancode_ascii(const char scan_code)
 {
@@ -20,9 +25,16 @@ char scancode_ascii(const char scan_code)
         char *str = "\\zxcvbnm,./";
         return str[scan_code - 0x2B];
     }
-    // else if(scan_code == BACKSPACE){
-    //     // return ' ';
-    // }
+    else if(scan_code == BACKSPACE){
+        return BACKSPACE;
+    }
+    else if(scan_code == ENTER){
+        // kputs("here");
+        return ENTER;
+    }
+    else if(scan_code == SPACE){
+        return SPACE;
+    }
     else{
         return 0;
     }
@@ -36,22 +48,38 @@ char read_key(void){
     int x = pos % VGA_WIDTH;
     int y = pos / VGA_WIDTH;
 
+    char buff[1000];
+
     unsigned char scan_code = inb(PS2_RW_DATA);
     char key = scancode_ascii(scan_code);
     if(key){
-        if(key == BACKSPACE){
-            // print_char(key, x-1, y);
-            // update_cursor(x, y);
-            // int i = 100;
-            // int j = 100;
-            // i = 0x68;
-            // i = 0x68;
-            // i = 0x68;
-            // i = 0x68;kkkkk
-        }else{
-            print_char(key, x, y);
-            update_cursor(x+1, y);
+        if(buffer >= 0){
+            if(key == BACKSPACE && buffer > 0){
+                print_char(' ', x-1, y);
+                update_cursor(x-1, y);
+                buffer--;
+            }
+            else if(key == SPACE){
+                buff[buffer] = ' ';
+                print_char(' ', x, y);
+                update_cursor(x+1, y);
+                buffer++;
+            } 
+            else if(key == ENTER){
+                kputs("");
+                kputs(buff);
+                kprintf(">:  ", 0);
+                
+                for(int i = 0; i < buffer; i++) buff[i] = 0;
+                buffer = 0;
+            } else if (key != BACKSPACE){
+                buff[buffer] = key;
+                print_char(key, x, y);
+                update_cursor(x+1, y);
+                buffer++;
+            }
         }
+        
         
     }
 }
