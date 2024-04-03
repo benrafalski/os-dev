@@ -69,8 +69,6 @@ mov cr0, rax
 %endmacro
 
 %macro stub_prework 0
-push 0
-push 0
 push rbp
 mov rbp, rsp
 pushagrd
@@ -94,18 +92,43 @@ iretq
 %endmacro
 
 isr_stub_0:
+    push 0
+    push 0
     stub_prework
     call exception_handler_0
     stub_postwork
 
 isr_stub_1:
+    push 0
+    push 1
     stub_prework
     call exception_handler_1
     stub_postwork
 
 isr_stub_2:
+    push 0
+    push 2
     stub_prework
     call exception_handler_2
+    stub_postwork
+
+isr_stub_6:
+    push 0
+    push 6
+    stub_prework
+    call exception_handler_6
+    stub_postwork
+
+isr_stub_13:
+    push 13
+    stub_prework
+    call exception_handler_13
+    stub_postwork
+
+isr_stub_14:
+    push 14
+    stub_prework
+    call exception_handler_14
     stub_postwork
 
 isr_stub_32:
@@ -123,6 +146,9 @@ isr_stub_33:
 extern exception_handler_0
 extern exception_handler_1
 extern exception_handler_2
+extern exception_handler_6
+extern exception_handler_13
+extern exception_handler_14
 extern exception_handler_33
 extern exception_handler
 ; isr_no_err_stub 0
@@ -131,15 +157,15 @@ extern exception_handler
 isr_no_err_stub 3
 isr_no_err_stub 4
 isr_no_err_stub 5
-isr_no_err_stub 6
+; isr_no_err_stub 6
 isr_no_err_stub 7
 isr_err_stub    8
 isr_no_err_stub 9
 isr_err_stub    10
 isr_err_stub    11
 isr_err_stub    12
-isr_err_stub    13
-isr_err_stub    14
+; isr_err_stub    13
+; isr_err_stub    14
 isr_no_err_stub 15
 isr_no_err_stub 16
 isr_err_stub    17

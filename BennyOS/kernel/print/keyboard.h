@@ -3,6 +3,10 @@
 #define BACKSPACE   0x0E
 #define SPACE       0x39
 #define ENTER       0x1C
+#define KEY_ROW1    "1234567890-=" 
+#define KEY_ROW2    "qwertyuiop[]"
+#define KEY_ROW3    "asdfghjkl;'`"
+#define KEY_ROW4    "\\zxcvbnm,./" 
 
 
 int buffer = 0;
@@ -10,26 +14,21 @@ int buffer = 0;
 char scancode_ascii(const char scan_code)
 {
     if(scan_code >= 0x2 && scan_code <= 0xD){
-        char *str = "1234567890-=";
-        return str[scan_code - 0x2];
+        return KEY_ROW1[scan_code - 0x2];
     }
     else if(scan_code >= 0x10 && scan_code <= 0x1B){
-        char *str = "qwertyuiop[]";
-        return str[scan_code - 0x10];
+        return KEY_ROW2[scan_code - 0x10];
     }
     else if (scan_code >= 0x1E && scan_code <= 0x29){
-        char *str = "asdfghjkl;'`";
-        return str[scan_code - 0x1E];
+        return KEY_ROW3[scan_code - 0x1E];
     }
     else if (scan_code >= 0x2B && scan_code <= 0x35){
-        char *str = "\\zxcvbnm,./";
-        return str[scan_code - 0x2B];
+        return KEY_ROW4[scan_code - 0x2B];
     }
     else if(scan_code == BACKSPACE){
         return BACKSPACE;
     }
     else if(scan_code == ENTER){
-        // kputs("here");
         return ENTER;
     }
     else if(scan_code == SPACE){
@@ -40,9 +39,6 @@ char scancode_ascii(const char scan_code)
     }
 }
 
-// kernel == 4157984 bytes
-//        == 0x3F7220 bytes
-
 char read_key(void){
     uint16_t pos = get_cursor_position();
     int x = pos % VGA_WIDTH;
@@ -52,12 +48,22 @@ char read_key(void){
 
     unsigned char scan_code = inb(PS2_RW_DATA);
     char key = scancode_ascii(scan_code);
-    if(key){
+
+    if(scan_code == 0xa){
+        // TODO
+        // fix '9' bug
+        buff[buffer] = '9';
+        print_char('9', x, y);
+        update_cursor(x+1, y);
+        buffer++;
+    }
+    else if(key){
         if(buffer >= 0){
             if(key == BACKSPACE && buffer > 0){
                 print_char(' ', x-1, y);
                 update_cursor(x-1, y);
                 buffer--;
+                buff[buffer] = ' ';
             }
             else if(key == SPACE){
                 buff[buffer] = ' ';
@@ -79,7 +85,6 @@ char read_key(void){
                 buffer++;
             }
         }
-        
-        
     }
+    return key;
 }

@@ -51,6 +51,11 @@ BEGIN_PM:
 BEGIN_LM:
     call clear_screen
 
+    ; mov rax, 0xffffffff00000000
+    ; mov rbx, [rax]
+
+    ; hlt
+
 
     call KERNEL_OFFSET
     ; jmp 59000h

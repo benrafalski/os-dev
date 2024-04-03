@@ -129,8 +129,9 @@ void kprintf(const char* str, int arg){
 
         if(*str == '\n'){
             y++;
-            x = 0;
             str++;
+            if(*str == 0) x = 1;
+            else x = 0;
             continue;
         }
 

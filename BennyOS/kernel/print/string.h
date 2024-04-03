@@ -12,7 +12,7 @@ void reverse(char str[], int length)
         start++;
     }
 }
-char *citoa(int num, char *str, int base)
+char *citoa(long long int num, char *str, int base)
 {
     int i = 0;
     int isNegative = 0;

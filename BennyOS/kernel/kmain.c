@@ -28,6 +28,23 @@ void main()
         kputs("Hello from the kernel! APIC NOT allowed");
         kputs("+--------------------------------------+\n");
     }
+    
+    // for(int i = 0; i < 1; i++){
+    //     uint64_t temp;
+    //     __asm__(
+    //         "mov (%1), %%rax;"
+    //         "mov %%rax, %0;"
+    //         : "=r"(temp)
+    //         : "r"(0xffffffff00000000) 
+    //         : "eax"
+    //     );
+    //     // kprintf("addr: 0x%x; ", 0xc000+i);
+    //     // kprintf("val: 0x%x\n", temp);
+    // }   
+    
+    // for(;;) {
+    //     asm("hlt");
+    // }
 
     kprintf(">:  ", 0);
 
@@ -42,6 +59,10 @@ void main()
     pic_clear_mask(1);
     pic_clear_mask(2);
     idt_set_descriptor(0x21, isr_stub_table[0x21], PRESENT|DPL_0|INT_GATE);
+
+
+    char* ptr = (char*)0xdeadbeef;
+    ptr[0] = 'h';
 
     for(;;) {
         asm("hlt");
