@@ -12,6 +12,10 @@ static int check_apic(void){
     return edx & APIC_MASK;
 }
 
+void interrupt(){
+    __asm__ __volatile__("int3;");
+}
+
 void main()
 {
     // set_color(WHITE_FGD, BLUE_BGD);
@@ -62,9 +66,22 @@ void main()
     idt_set_descriptor(0x21, isr_stub_table[0x21], PRESENT|DPL_0|INT_GATE);
 
 
+    // uint64_t *kernel_addr = (uint64_t*)0xdeadb000;
     mem();
+    // if(!(*kernel_addr)){
+    //     ((void(*)(void))0xdeadb000)();
+    // }
+
+    
     // char* ptr = (char*)0xdeadbeef;
     // ptr[0] = 'h';
+
+    // asm(
+    //     "mov $0xdeadb000, %%rax;"
+    //     "call %%rax;"
+    
+    //  : : :"rax");
+    
 
     for(;;) {
         asm("hlt");
