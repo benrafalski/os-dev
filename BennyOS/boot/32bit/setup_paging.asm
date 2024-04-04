@@ -15,7 +15,7 @@ setup_paging:
     ; PDT[0] -> PT.
     ; PT -> 0x00000000 - 0x00200000.
     ; First we will clear the tables:
-    mov edi, 0x9000    ; Set the destination index to 0x1000.
+    mov edi, 0x9000    ; Set the destination index to 0x9000.
     mov cr3, edi       ; Set control register 3 to the destination index.
     xor eax, eax       ; Nullify the A-register.
     mov ecx, 4096      ; Set the C-register to 4096.
@@ -24,10 +24,10 @@ setup_paging:
 
     ; the page tables are going to be located at these addresses:
 
-    ; PML4T - 0x1000.
-    ; PDPT - 0x2000.
-    ; PDT - 0x3000.
-    ; PT - 0x4000.
+    ; PML4T - 0x9000.
+    ; PDPT - 0xa000.
+    ; PDT - 0xb000.
+    ; PT - 0xc000.
     ; So lets make PML4T[0] point to the PDPT and so on:
     mov DWORD [edi], 0xa003      ; Set the uint32_t at the destination index to 0x2003.
     add edi, 0x1000              ; Add 0x1000 to the destination index.

@@ -75,7 +75,7 @@ void exception_handler(isr_frame_t *frame)
 void print_exception_msg(const char *msg)
 {
     uint8_t color = get_color();
-    set_color(RED_FGD, BLUE_BGD);
+    set_color(LIGHT_RED_FGD, DARK_GRAY_BGD);
     kputs(msg);
     set_color(color & 0xf, color & 0xf0);
 }
@@ -94,7 +94,7 @@ void exception_handler_0(isr_frame_t *frame)
 
     // kprintf("before: 0x%x\n", frame->base_frame.rbp);
     // kprintf("before: 0x%x\n", frame->base_frame.vector);
-    kprintf("before: 0x%x\n", frame->base_frame.rip);
+    // kprintf("before: 0x%x\n", frame->base_frame.rip);
     // kprintf("before: 0x%x\n", frame->base_frame.rip);
 
 
@@ -180,6 +180,11 @@ void exception_handler_13(isr_frame_t *frame)
 void exception_handler_14(isr_frame_t *frame);
 void exception_handler_14(isr_frame_t *frame)
 {
+    char temp1[4];
+    char* cr2_address = citoa(frame->control_registers.cr2, temp1, 16);
+    char temp2[54 + strlen(cr2_address)];
+    char* output_message = strcat("\nException 14 caught (Fault): page fault at address 0x", cr2_address, temp2);
+    print_exception_msg(output_message);
     // The Page Fault sets an error code:
     //  31              15                             4               0
     // +---+--  --+---+-----+---+--  --+---+----+----+---+---+---+---+---+
@@ -189,11 +194,15 @@ void exception_handler_14(isr_frame_t *frame)
 
     if(error & 1){
         // When set, the page fault was caused by a page-protection violation. When not set, it was caused by a non-present page.
-        print_exception_msg("\nPRESENT error. ");
+        print_exception_msg("     Page present");
+    }else{
+        print_exception_msg("     Page not present");
     }
     if(error & (1 << 1)){
         // When set, the page fault was caused by a write access. When not set, it was caused by a read access.
-        print_exception_msg("\nWRITE error. ");
+        print_exception_msg("     Write access");
+    }else{
+        print_exception_msg("     Read access");
     }
     if(error & (1 << 2)){
         // When set, the page fault was caused while CPL = 3. This does not necessarily mean that the page fault was a privilege violation.
@@ -219,13 +228,8 @@ void exception_handler_14(isr_frame_t *frame)
         // When set, the fault was due to an SGX violation. The fault is unrelated to ordinary paging.
        print_exception_msg("\nSGX error. ");
     }
-
-    if(error & (1 << 13)){
-        kputs("here");
-    }
-
-    print_exception_msg("Exception 14 caught (Fault): page fault interrupt, continuing...\n");
-    frame->base_frame.rip += 1;
+    // frame->base_frame.rip += 1;
+    __asm__ volatile("cli; hlt");
 }
 
 // Keyboard Interrupt

@@ -1,4 +1,4 @@
-HEADERS = $(wildcard ./print/*.h ./interrupts/*.h)
+HEADERS = $(wildcard ./print/*.h ./interrupts/*.h ./memory/*.h)
 
 all: ../bin/os-image
 

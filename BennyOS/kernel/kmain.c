@@ -1,7 +1,8 @@
-
+#include "cpuid.h"
 #include "print/print.h"
 #include "interrupts/init_idt.h"
-#include "cpuid.h"
+#include "memory/mmu.h"
+
 
 #define APIC_MASK 1 << 9
 
@@ -61,8 +62,9 @@ void main()
     idt_set_descriptor(0x21, isr_stub_table[0x21], PRESENT|DPL_0|INT_GATE);
 
 
-    char* ptr = (char*)0xdeadbeef;
-    ptr[0] = 'h';
+    mem();
+    // char* ptr = (char*)0xdeadbeef;
+    // ptr[0] = 'h';
 
     for(;;) {
         asm("hlt");
