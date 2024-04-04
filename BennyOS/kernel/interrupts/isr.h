@@ -110,9 +110,9 @@ void exception_handler_0(isr_frame_t *frame)
 
     // __asm__ volatile("cli; hlt");
 
-    // frame->base_frame.rip += 1;
+    frame->base_frame.rip += 2;
     // kprintf("after: 0x%x; ", frame->base_frame.rip);
-    __asm__ volatile("cli; hlt");
+    // __asm__ volatile("cli; hlt");
 }
 
 // Debug (Trap)
@@ -161,6 +161,20 @@ void exception_handler_6(isr_frame_t *frame)
 void exception_handler_13(isr_frame_t *frame);
 void exception_handler_13(isr_frame_t *frame)
 {
+    char str[20];
+    char* hex = citoa(frame->base_frame.rip, str, 16);
+    kputs("\nRIP:");
+    kputs(hex);
+
+
+    
+    hex = citoa(frame->base_frame.error_code, str, 16);
+    kputs("\nError code:");
+    kputs(hex);
+
+
+
+
     print_exception_msg("Exception 13 caught (Fault): general protection fault interrupt, halting...\n");
     // frame->base_frame.rip += 1;
     while (true)

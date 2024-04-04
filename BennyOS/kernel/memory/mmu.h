@@ -44,11 +44,11 @@ void map_page(uint64_t paddr, uint64_t vaddr){
 
 void mem(void){
 
-    map_page(0x100000, 0xdeadb000);
-    // uint64_t *ptr = (uint64_t*)0xdeadb000;
-    // uint64_t temp1 = *ptr;
-    // char str3[10];
-    // char* hex5 = citoa(temp1, str3, 16);
-    // kputs(hex5);
+    map_page(0x1000, 0xdeadb000);
+    uint64_t *ptr = (uint64_t*)0xdeadb000;
+    uint64_t temp1 = *ptr;
+    char str3[10];
+    char* hex5 = citoa(temp1, str3, 16);
+    kputs(hex5);
 
 }

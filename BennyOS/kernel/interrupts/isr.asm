@@ -120,6 +120,7 @@ isr_stub_6:
     stub_postwork
 
 isr_stub_13:
+    ; hlt
     push 13
     stub_prework
     call exception_handler_13
@@ -138,6 +139,8 @@ isr_stub_32:
 
 
 isr_stub_33:
+    push 0
+    push 33
     stub_prework
     call exception_handler_33
     stub_postwork
