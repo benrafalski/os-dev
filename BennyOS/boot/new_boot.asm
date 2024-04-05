@@ -1,4 +1,5 @@
 [org 0x7c00]
+; global kernel_entry
 ; [bits 16]
 KERNEL_OFFSET equ 0x1000
 
@@ -76,9 +77,14 @@ BEGIN_LM:
     cmp rax, 1024
     jne .fill_table
 
+; [extern map_page]
 
-    call 0xFFFFFFFF80000000
-    ; call KERNEL_OFFSET
+;     mov rdi, 0x1000
+;     mov rsi, 0xFFFFFFFF80000000
+;     call map_page
+
+    ; call 0xFFFFFFFF80000000
+    call KERNEL_OFFSET
     ; jmp 59000h
 
     jmp $

@@ -1,5 +1,7 @@
 [bits 64]
 [extern main]
-
-call main
-jmp $
+global kernel_entry
+kernel_entry:
+    ; hlt
+    call main
+    jmp $
