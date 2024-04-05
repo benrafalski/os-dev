@@ -18,6 +18,7 @@ void interrupt(){
 
 void main()
 {
+    map_kernel();
     // set_color(WHITE_FGD, BLUE_BGD);
     set_color(LIGHT_GREEN_FGD, DARK_GRAY_BGD);
     clear_screen();

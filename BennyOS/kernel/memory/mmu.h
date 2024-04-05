@@ -23,8 +23,6 @@ bool is_valid_canonical(uint64_t addr){
     return false;
 }
 
-// kernel code = 0xFFFFFFFF80000000-0xFFFFFFFFA0000000
-
 void map_page(uint64_t paddr, uint64_t vaddr){
     paddr &= ~(0xFFF);
     vaddr &= ~(0xFFF);
@@ -45,6 +43,22 @@ void map_page(uint64_t paddr, uint64_t vaddr){
     pd[pd_i] = (uint64_t)0xC003;
     pt[pt_i] = (uint64_t)(paddr | 3);
 }
+
+
+void map_kernel(){
+    // kernel code = 0xFFFFFFFF80000000-0xFFFFFFFFA0000000
+    uint64_t kstart = 0xFFFFFFFF80001000;
+    uint64_t kend = 0xFFFFFFFFA0000000;
+
+    uint64_t phys = 0x2000;
+    while(kstart < kend){
+        map_page(phys, kstart);
+        phys += 0x1000;
+        kstart += 0x1000;
+    }
+
+}
+
 
 void mem(void){
 
