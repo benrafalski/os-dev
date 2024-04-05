@@ -56,38 +56,42 @@ BEGIN_LM:
 
     ; hlt
 
-    mov rax, 0x0
-    mov rbx, 0x1000
-.fill_table:
-    mov rcx, rbx
-    or rcx, 3
-    mov rdx, 0x9000
-    mov rsi, 511
-    mov rdi, 0xA003
-    mov [rdx+rsi*8], rdi
-    mov rdx, 0xA000
-    mov rsi, 510
-    mov rdi, 0xB003
-    mov [rdx+rsi*8], rdi
-    mov rdx, 0xB000
-    mov rsi, 0
-    mov rdi, 0xC003
-    mov [rdx+rsi*8], rdi
-    mov rdx, 0xC000
-    mov rsi, 0
-    mov [rdx+rsi*8], rcx
-    add rbx, 0x1000
-    inc rax
+;     mov rax, 0x0
+;     mov rbx, 0x1000
+; .fill_table:
+;     mov rcx, rbx
+;     or rcx, 3
+;     mov rdx, 0x9000
+;     mov rsi, 511
+;     mov rdi, 0xA003
+;     mov [rdx+rsi*8], rdi
+;     mov rdx, 0xA000
+;     mov rsi, 510
+;     mov rdi, 0xB003
+;     mov [rdx+rsi*8], rdi
+;     mov rdx, 0xB000
+;     mov rsi, 0
+;     mov rdi, 0xC003
+;     mov [rdx+rsi*8], rdi
+;     mov rdx, 0xC000
+;     mov rsi, 0
+;     mov [rdx+rsi*8], rcx
+;     add rbx, 0x1000
+;     inc rax
     ; cmp rax, 1024
     ; jne .fill_table
+
+    ; 0x232e is main
 
 ; [extern map_page]
 
 ;     mov rdi, 0x1000
 ;     mov rsi, 0xFFFFFFFF80000000
 ;     call map_page
-
-    ; call 0xFFFFFFFF80000000
+; 0x7dd2
+    ; hlt
+    ; call 0xffffffff8000000
+    ; jmp 0xFFFFFFFF80000000
     call KERNEL_OFFSET
     ; jmp 59000h
 

@@ -18,10 +18,11 @@ void interrupt(){
 
 void main()
 {
-    map_kernel();
     // set_color(WHITE_FGD, BLUE_BGD);
     set_color(LIGHT_GREEN_FGD, DARK_GRAY_BGD);
     clear_screen();
+    // map_kernel();
+    // for(;;);
     // good
     if(check_apic()){
         // these strings are at 0x3118 when clearscreen is called is asm these are nowhere to be found
@@ -35,7 +36,7 @@ void main()
         kputs("+--------------------------------------+\n");
     }
 
-    for(;;);
+    // for(;;);
     
     // for(int i = 0; i < 1; i++){
     //     uint64_t temp;

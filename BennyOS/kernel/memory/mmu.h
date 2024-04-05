@@ -47,10 +47,10 @@ void map_page(uint64_t paddr, uint64_t vaddr){
 
 void map_kernel(){
     // kernel code = 0xFFFFFFFF80000000-0xFFFFFFFFA0000000
-    uint64_t kstart = 0xFFFFFFFF80001000;
-    uint64_t kend = 0xFFFFFFFFA0000000;
+    uint64_t kstart = 0xFFFFFFFF80000000;
+    uint64_t kend = 0xFFFFFFFF00001000;
 
-    uint64_t phys = 0x2000;
+    uint64_t phys = 0x1000;
     while(kstart < kend){
         map_page(phys, kstart);
         phys += 0x1000;
@@ -61,9 +61,9 @@ void map_kernel(){
 
 
 void mem(void){
-
+    // map_kernel();
     // map_page(0x1000, 0xdeadb000);
-    // map_page(0x1000, 0xFFFFFFFF80000000);
+    map_page(0x1000, 0xFFFFFFFF80000000);
     // uint64_t *ptr = (uint64_t*)0xdeadb000;
     // uint64_t temp1 = *ptr;
     // char str3[10];
