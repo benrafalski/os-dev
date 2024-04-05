@@ -26,7 +26,7 @@ jmp $ ; Hang
 %include "../boot/32bit/setup_paging.asm"
 %include "../boot/64bit/switch_to_64bit.asm"
 %include "../boot/64bit/gdt.asm"
-%include "../boot/64bit/print_utils.asm"
+; %include "../boot/64bit/print_utils.asm"
 
 [bits 16]
 load_kernel:
@@ -49,7 +49,7 @@ BEGIN_PM:
 ; Use 64-bit.
 [BITS 64]
 BEGIN_LM:
-    call clear_screen
+    ; call clear_screen
 
     ; mov rax, 0xffffffff00000000
     ; mov rbx, [rax]
@@ -61,6 +61,10 @@ BEGIN_LM:
 .fill_table:
     mov rcx, rbx
     or rcx, 3
+    mov rdx, 0x9000
+    mov rsi, 511
+    mov rdi, 0xA003
+    mov [rdx+rsi*8], rdi
     mov rdx, 0xA000
     mov rsi, 510
     mov rdi, 0xB003
@@ -74,8 +78,8 @@ BEGIN_LM:
     mov [rdx+rsi*8], rcx
     add rbx, 0x1000
     inc rax
-    cmp rax, 1024
-    jne .fill_table
+    ; cmp rax, 1024
+    ; jne .fill_table
 
 ; [extern map_page]
 

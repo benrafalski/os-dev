@@ -33,6 +33,8 @@ void main()
         kputs("Hello from the kernel! APIC NOT allowed");
         kputs("+--------------------------------------+\n");
     }
+
+    for(;;);
     
     // for(int i = 0; i < 1; i++){
     //     uint64_t temp;

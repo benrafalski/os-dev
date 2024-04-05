@@ -29,16 +29,18 @@ void map_page(uint64_t paddr, uint64_t vaddr){
     paddr &= ~(0xFFF);
     vaddr &= ~(0xFFF);
 
-    // uint64_t *pml4 = (uint64_t*)0x9000;
+    uint64_t *pml4 = (uint64_t*)0x9000;
     uint64_t *pdpt = (uint64_t*)0xA000;
     uint64_t *pd = (uint64_t*)0xB000;
     uint64_t *pt = (uint64_t*)0xC000;
     uint64_t *page = (uint64_t*)paddr;
 
+    uint64_t pml4_i = (vaddr >> 39) & 0x1ff;
     uint16_t pdpt_i = (vaddr >> 30) & 0x1ff;
     uint16_t pd_i = (vaddr >> 21) & 0x1ff;
     uint16_t pt_i = (vaddr >> 12) & 0x1ff;
 
+    pml4[pml4_i] = (uint64_t)0xA003;
     pdpt[pdpt_i] = (uint64_t)0xB003;
     pd[pd_i] = (uint64_t)0xC003;
     pt[pt_i] = (uint64_t)(paddr | 3);
@@ -47,6 +49,7 @@ void map_page(uint64_t paddr, uint64_t vaddr){
 void mem(void){
 
     // map_page(0x1000, 0xdeadb000);
+    // map_page(0x1000, 0xFFFFFFFF80000000);
     // uint64_t *ptr = (uint64_t*)0xdeadb000;
     // uint64_t temp1 = *ptr;
     // char str3[10];

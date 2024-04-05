@@ -8,7 +8,6 @@ all: ../bin/os-image
 ../bin/kernel.bin: ../bin/kernel_entry.o ../bin/kernel.o ../bin/isr.o
 	ld -o $@ -T linker.ld $^ --oformat binary
 
-
 ../bin/kernel.o: kmain.c ${HEADERS}
 	gcc -g -ffreestanding -c $< -o $@ 
 
