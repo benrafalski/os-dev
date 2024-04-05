@@ -4,7 +4,7 @@ all: ../bin/os-image
 
 ../bin/os-image: ../bin/boot_sector.bin ../bin/kernel.bin
 	cat $^ > $@
-
+# ld -o $@ -Ttext 0xFFFFFFFF80000000 $^ --oformat binary
 ../bin/kernel.bin: ../bin/kernel_entry.o ../bin/kernel.o ../bin/isr.o
 	ld -o $@ -Ttext 0x1000 $^ --oformat binary
 

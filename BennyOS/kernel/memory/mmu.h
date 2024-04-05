@@ -23,11 +23,13 @@ bool is_valid_canonical(uint64_t addr){
     return false;
 }
 
+// kernel code = 0xFFFFFFFF80000000-0xFFFFFFFFA0000000
+
 void map_page(uint64_t paddr, uint64_t vaddr){
     paddr &= ~(0xFFF);
     vaddr &= ~(0xFFF);
 
-    uint64_t *pml4 = (uint64_t*)0x9000;
+    // uint64_t *pml4 = (uint64_t*)0x9000;
     uint64_t *pdpt = (uint64_t*)0xA000;
     uint64_t *pd = (uint64_t*)0xB000;
     uint64_t *pt = (uint64_t*)0xC000;
@@ -44,11 +46,11 @@ void map_page(uint64_t paddr, uint64_t vaddr){
 
 void mem(void){
 
-    map_page(0x1000, 0xdeadb000);
-    uint64_t *ptr = (uint64_t*)0xdeadb000;
-    uint64_t temp1 = *ptr;
-    char str3[10];
-    char* hex5 = citoa(temp1, str3, 16);
-    kputs(hex5);
+    // map_page(0x1000, 0xdeadb000);
+    // uint64_t *ptr = (uint64_t*)0xdeadb000;
+    // uint64_t temp1 = *ptr;
+    // char str3[10];
+    // char* hex5 = citoa(temp1, str3, 16);
+    // kputs(hex5);
 
 }

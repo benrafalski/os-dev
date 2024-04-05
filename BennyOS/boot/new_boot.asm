@@ -21,7 +21,7 @@ jmp $ ; Hang
 %include "../boot/16bit/disk_load.asm"
 %include "../boot/32bit/gdt.asm"
 %include "../boot/32bit/switch_to_32bit.asm"
-%include "../boot/32bit/print_utils.asm"
+; %include "../boot/32bit/print_utils.asm"
 %include "../boot/32bit/setup_paging.asm"
 %include "../boot/64bit/switch_to_64bit.asm"
 %include "../boot/64bit/gdt.asm"
@@ -39,7 +39,6 @@ load_kernel:
 
     ret
 
-
 [bits 32]
 BEGIN_PM:
 
@@ -56,13 +55,62 @@ BEGIN_LM:
 
     ; hlt
 
+    mov rax, 0x0
+    mov rbx, 0x1000
+.fill_table:
+    mov rcx, rbx
+    or rcx, 3
+    mov rdx, 0xA000
+    mov rsi, 510
+    mov rdi, 0xB003
+    mov [rdx+rsi*8], rdi
+    mov rdx, 0xB000
+    mov rsi, 0
+    mov rdi, 0xC003
+    mov [rdx+rsi*8], rdi
+    mov rdx, 0xC000
+    mov rsi, 0
+    mov [rdx+rsi*8], rcx
+    add rbx, 0x1000
+    inc rax
+    cmp rax, 1024
+    jne .fill_table
 
-    call KERNEL_OFFSET
+
+    call 0xFFFFFFFF80000000
+    ; call KERNEL_OFFSET
     ; jmp 59000h
 
     jmp $
 
     hlt                           ; Halt the processor.
+
+
+
+
+;  mov eax, 0x0
+;  mov ebx, 0x100000
+;  .fill_table:
+;       mov ecx, ebx
+;       or ecx, 3
+;       mov [table_768+eax*4], ecx
+;       add ebx, 4096
+;       inc eax
+;       cmp eax, 1024
+;       jne .fill_table
+; mov rax, 0xFFFFFFFF80000000
+; 0xFFFFFFFF80001000
+
+
+
+
+
+
+
+
+
+
+
 
 ; Data
 BOOT_DRIVE db 0x0
