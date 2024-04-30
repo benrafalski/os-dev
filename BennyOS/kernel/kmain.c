@@ -71,7 +71,7 @@ void main()
 
 
     // uint64_t *kernel_addr = (uint64_t*)0xdeadb000;
-    mem();
+    // mem();
     // if(!(*kernel_addr)){
     //     ((void(*)(void))0xdeadb000)();
     // }

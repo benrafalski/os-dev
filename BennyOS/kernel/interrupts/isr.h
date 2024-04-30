@@ -62,10 +62,7 @@ void exception_handler(isr_frame_t *frame)
                      :
                      : "rax");
 
-    // char *str;
-    // str = citoa(dst, str, 10);
     kputs("Exception!! Error code: ");
-    // kputs(str);
     while (true)
     {
         __asm__ volatile("cli; hlt");
@@ -90,29 +87,7 @@ void exception_handler_0(isr_frame_t *frame);
 void exception_handler_0(isr_frame_t *frame)
 {
     print_exception_msg("Exception 0 caught (fault): divide by zero, continuing...\n");
-    // kprintf("0x%x", frame->base_frame.rip);
-
-    // kprintf("before: 0x%x\n", frame->base_frame.rbp);
-    // kprintf("before: 0x%x\n", frame->base_frame.vector);
-    // kprintf("before: 0x%x\n", frame->base_frame.rip);
-    // kprintf("before: 0x%x\n", frame->base_frame.rip);
-
-
-    // uint64_t temp;
-    // __asm__(
-    //     "mov (%1), %%rax;"
-    //     "mov %%rax, %0;"
-    //     : "=r"(temp)
-    //     : "r"(frame->base_frame.rip) 
-    //     : "rax"
-    // );
-    // kprintf("addr: 0x%x; ", temp);
-
-    // __asm__ volatile("cli; hlt");
-
     frame->base_frame.rip += 2;
-    // kprintf("after: 0x%x; ", frame->base_frame.rip);
-    // __asm__ volatile("cli; hlt");
 }
 
 // Debug (Trap)
@@ -165,15 +140,10 @@ void exception_handler_13(isr_frame_t *frame)
     char* hex = citoa(frame->base_frame.rip, str, 16);
     kputs("\nRIP:");
     kputs(hex);
-
-
     
     hex = citoa(frame->base_frame.error_code, str, 16);
     kputs("\nError code:");
     kputs(hex);
-
-
-
 
     print_exception_msg("Exception 13 caught (Fault): general protection fault interrupt, halting...\n");
     // frame->base_frame.rip += 1;
@@ -244,6 +214,167 @@ void exception_handler_14(isr_frame_t *frame)
     }
     // frame->base_frame.rip += 1;
     __asm__ volatile("cli; hlt");
+}
+
+void exception_handler_7(isr_frame_t *frame);
+void exception_handler_7(isr_frame_t *frame)
+{
+    print_exception_msg("Exception 6 caught (Fault): Invalid Opcode interrupt, continuing...\n");
+    frame->base_frame.rip += 1;
+}
+
+void exception_handler_8(isr_frame_t *frame);
+void exception_handler_8(isr_frame_t *frame)
+{
+    print_exception_msg("Exception 6 caught (Fault): Invalid Opcode interrupt, continuing...\n");
+    frame->base_frame.rip += 1;
+}
+
+void exception_handler_9(isr_frame_t *frame);
+void exception_handler_9(isr_frame_t *frame)
+{
+    print_exception_msg("Exception 6 caught (Fault): Invalid Opcode interrupt, continuing...\n");
+    frame->base_frame.rip += 1;
+}
+
+void exception_handler_10(isr_frame_t *frame);
+void exception_handler_10(isr_frame_t *frame)
+{
+    print_exception_msg("Exception 6 caught (Fault): Invalid Opcode interrupt, continuing...\n");
+    frame->base_frame.rip += 1;
+}
+
+void exception_handler_11(isr_frame_t *frame);
+void exception_handler_11(isr_frame_t *frame)
+{
+    print_exception_msg("Exception 6 caught (Fault): Invalid Opcode interrupt, continuing...\n");
+    frame->base_frame.rip += 1;
+}
+
+void exception_handler_12(isr_frame_t *frame);
+void exception_handler_12(isr_frame_t *frame)
+{
+    print_exception_msg("Exception 6 caught (Fault): Invalid Opcode interrupt, continuing...\n");
+    frame->base_frame.rip += 1;
+}
+
+void exception_handler_15(isr_frame_t *frame);
+void exception_handler_15(isr_frame_t *frame)
+{
+    print_exception_msg("Exception 6 caught (Fault): Invalid Opcode interrupt, continuing...\n");
+    frame->base_frame.rip += 1;
+}
+
+void exception_handler_16(isr_frame_t *frame);
+void exception_handler_16(isr_frame_t *frame)
+{
+    print_exception_msg("Exception 6 caught (Fault): Invalid Opcode interrupt, continuing...\n");
+    frame->base_frame.rip += 1;
+}
+
+void exception_handler_17(isr_frame_t *frame);
+void exception_handler_17(isr_frame_t *frame)
+{
+    print_exception_msg("Exception 6 caught (Fault): Invalid Opcode interrupt, continuing...\n");
+    frame->base_frame.rip += 1;
+}
+
+void exception_handler_18(isr_frame_t *frame);
+void exception_handler_18(isr_frame_t *frame)
+{
+    print_exception_msg("Exception 6 caught (Fault): Invalid Opcode interrupt, continuing...\n");
+    frame->base_frame.rip += 1;
+}
+
+void exception_handler_19(isr_frame_t *frame);
+void exception_handler_19(isr_frame_t *frame)
+{
+    print_exception_msg("Exception 6 caught (Fault): Invalid Opcode interrupt, continuing...\n");
+    frame->base_frame.rip += 1;
+}
+
+void exception_handler_20(isr_frame_t *frame);
+void exception_handler_20(isr_frame_t *frame)
+{
+    print_exception_msg("Exception 6 caught (Fault): Invalid Opcode interrupt, continuing...\n");
+    frame->base_frame.rip += 1;
+}
+
+void exception_handler_21(isr_frame_t *frame);
+void exception_handler_21(isr_frame_t *frame)
+{
+    print_exception_msg("Exception 6 caught (Fault): Invalid Opcode interrupt, continuing...\n");
+    frame->base_frame.rip += 1;
+}
+
+void exception_handler_22(isr_frame_t *frame);
+void exception_handler_22(isr_frame_t *frame)
+{
+    print_exception_msg("Exception 6 caught (Fault): Invalid Opcode interrupt, continuing...\n");
+    frame->base_frame.rip += 1;
+}
+
+void exception_handler_23(isr_frame_t *frame);
+void exception_handler_23(isr_frame_t *frame)
+{
+    print_exception_msg("Exception 6 caught (Fault): Invalid Opcode interrupt, continuing...\n");
+    frame->base_frame.rip += 1;
+}
+
+void exception_handler_24(isr_frame_t *frame);
+void exception_handler_24(isr_frame_t *frame)
+{
+    print_exception_msg("Exception 6 caught (Fault): Invalid Opcode interrupt, continuing...\n");
+    frame->base_frame.rip += 1;
+}
+
+void exception_handler_25(isr_frame_t *frame);
+void exception_handler_25(isr_frame_t *frame)
+{
+    print_exception_msg("Exception 6 caught (Fault): Invalid Opcode interrupt, continuing...\n");
+    frame->base_frame.rip += 1;
+}
+
+void exception_handler_26(isr_frame_t *frame);
+void exception_handler_26(isr_frame_t *frame)
+{
+    print_exception_msg("Exception 6 caught (Fault): Invalid Opcode interrupt, continuing...\n");
+    frame->base_frame.rip += 1;
+}
+
+void exception_handler_27(isr_frame_t *frame);
+void exception_handler_27(isr_frame_t *frame)
+{
+    print_exception_msg("Exception 6 caught (Fault): Invalid Opcode interrupt, continuing...\n");
+    frame->base_frame.rip += 1;
+}
+
+void exception_handler_28(isr_frame_t *frame);
+void exception_handler_28(isr_frame_t *frame)
+{
+    print_exception_msg("Exception 6 caught (Fault): Invalid Opcode interrupt, continuing...\n");
+    frame->base_frame.rip += 1;
+}
+
+void exception_handler_29(isr_frame_t *frame);
+void exception_handler_29(isr_frame_t *frame)
+{
+    print_exception_msg("Exception 6 caught (Fault): Invalid Opcode interrupt, continuing...\n");
+    frame->base_frame.rip += 1;
+}
+
+void exception_handler_30(isr_frame_t *frame);
+void exception_handler_30(isr_frame_t *frame)
+{
+    print_exception_msg("Exception 6 caught (Fault): Invalid Opcode interrupt, continuing...\n");
+    frame->base_frame.rip += 1;
+}
+
+void exception_handler_31(isr_frame_t *frame);
+void exception_handler_31(isr_frame_t *frame)
+{
+    print_exception_msg("Exception 6 caught (Fault): Invalid Opcode interrupt, continuing...\n");
+    frame->base_frame.rip += 1;
 }
 
 // Keyboard Interrupt
