@@ -9,8 +9,18 @@ isr_stub_%+%1:
 isr_stub_%+%1:
     mov rax, %1
     call exception_handler
-    iretq
+    iretq 
 %endmacro
+
+
+; %macro isr_no_err_stub 1
+; isr_stub_%+%1:
+;         push 0
+;         push %1
+;         stub_prework
+;         call exception_handler
+;         stub_postwork
+; %endmacro
 
 %macro pushagrd 0
 push rax
@@ -91,26 +101,27 @@ add rsp, 0x10
 iretq
 %endmacro
 
-isr_stub_0:
-    push 0
-    push 0
-    stub_prework
-    call exception_handler_0
-    stub_postwork
 
-isr_stub_1:
+%macro isr_stub_no_err 1
+isr_stub_%+%1:
     push 0
-    push 1
+    push %1
     stub_prework
-    call exception_handler_1
-    stub_postwork
+    call exception_handler
+    stub_postwork 
+%endmacro
 
-isr_stub_2:
-    push 0
-    push 2
-    stub_prework
-    call exception_handler_2
-    stub_postwork
+isr_stub_no_err 0
+isr_stub_no_err 1
+isr_stub_no_err 2
+
+
+; isr_stub_2:
+;     push 0
+;     push 2
+;     stub_prework
+;     call exception_handler_2
+;     stub_postwork
 
 isr_stub_6:
     push 0
@@ -146,9 +157,9 @@ isr_stub_33:
     stub_postwork
 
 
-extern exception_handler_0
-extern exception_handler_1
-extern exception_handler_2
+; extern exception_handler_0
+; extern exception_handler_1
+; extern exception_handler_2
 extern exception_handler_6
 extern exception_handler_13
 extern exception_handler_14

@@ -6,6 +6,8 @@
 
 #define APIC_MASK 1 << 9
 
+// int val = 0;
+
 static int check_apic(void){
     uint32_t unused, edx;
     __cpuid(1, unused, unused, unused, edx);
@@ -16,8 +18,21 @@ void interrupt(){
     __asm__ __volatile__("int3;");
 }
 
+
+
 void main()
 {
+    // if(val){
+    //     kputs("hrere");
+    //     for(;;) {
+    //         asm("hlt");
+    //     }
+
+    // }
+
+    // val = 1;
+
+
     // set_color(WHITE_FGD, BLUE_BGD);
     set_color(LIGHT_GREEN_FGD, DARK_GRAY_BGD);
     clear_screen();
@@ -69,24 +84,15 @@ void main()
     pic_clear_mask(2);
     idt_set_descriptor(0x21, isr_stub_table[0x21], PRESENT|DPL_0|INT_GATE);
 
+    // char* i = 0xdeadbeef;
+    // *i = 0;
 
-    // uint64_t *kernel_addr = (uint64_t*)0xdeadb000;
-    // mem();
-    // if(!(*kernel_addr)){
-    //     ((void(*)(void))0xdeadb000)();
-    // }
 
+    __asm__ __volatile__("int $2;");
+
+    // int i = 0;
+    // int j = 100/i;
     
-    // char* ptr = (char*)0xdeadbeef;
-    // ptr[0] = 'h';
-
-    // asm(
-    //     "mov $0xdeadb000, %%rax;"
-    //     "call %%rax;"
-    
-    //  : : :"rax");
-    
-
     for(;;) {
         asm("hlt");
     }

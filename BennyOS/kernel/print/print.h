@@ -158,3 +158,11 @@ void clear_screen()
 
     update_cursor(0, 0);
 }
+
+void print_exception_msg(const char *msg)
+{
+    uint8_t color = get_color();
+    set_color(LIGHT_RED_FGD, DARK_GRAY_BGD);
+    kputs(msg);
+    set_color(color & 0xf, color & 0xf0);
+}

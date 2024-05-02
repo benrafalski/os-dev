@@ -72,6 +72,7 @@ char read_key(void){
                 buffer++;
             } 
             else if(key == ENTER){
+reset:
                 kputs("");
                 kputs(buff);
                 kprintf(">:  ", 0);

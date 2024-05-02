@@ -51,64 +51,95 @@ typedef struct
     uint8_t key;
 } scancode_t;
 
+#define X86_DE_FAULT 0      // divide error fault
+#define X86_DB_FAULT_TRAP 1 // debug fault/trap
+#define X86_NMI_INT 2       // non-maskable interrupt
 
-__attribute__((noreturn)) void exception_handler(isr_frame_t *frame);
-void exception_handler(isr_frame_t *frame)
-{
-    unsigned long long dst;
-
-    __asm__ volatile("movq %%rax, %0;"
-                     : "=r"(dst)
-                     :
-                     : "rax");
-
-    kputs("Exception!! Error code: ");
+void halt(){
     while (true)
     {
         __asm__ volatile("cli; hlt");
     }
 }
 
-void print_exception_msg(const char *msg)
-{
-    uint8_t color = get_color();
-    set_color(LIGHT_RED_FGD, DARK_GRAY_BGD);
-    kputs(msg);
-    set_color(color & 0xf, color & 0xf0);
+
+void do_divide_zero(isr_frame_t *frame);
+void do_divide_zero(isr_frame_t *frame){
+    print_exception_msg("Division Error (cannot divide by 0 using DIV or IDIV). Halting...");
+    // kprintf("$rip: 0x%x", frame->base_frame.rip);
+    halt();
 }
+
+
+void do_debug(isr_frame_t *frame);
+void do_debug(isr_frame_t *frame){
+    print_exception_msg("Debug. Halting...");
+    halt();
+    
+}
+
+void do_nmi(isr_frame_t *frame);
+void do_nmi(isr_frame_t *frame){
+    print_exception_msg("Non-Maskable Interrupt. Halting...");
+    halt();
+    
+}
+
+
+__attribute__((noreturn)) void exception_handler(isr_frame_t *frame);
+void exception_handler(isr_frame_t *frame)
+{
+    uint64_t vector = frame->base_frame.vector;
+
+    switch (vector)
+    {
+    case X86_DE_FAULT:
+        do_divide_zero(frame);
+        break;
+
+    case X86_DB_FAULT_TRAP:
+        do_debug(frame);
+        break;
+
+    case X86_NMI_INT:
+        do_nmi(frame);
+        break;
+    
+    default:
+        break;
+    }
+
+
+    while (true)
+    {
+        __asm__ volatile("cli; hlt");
+    }
+}
+
+
 
 // FAULTS: $rip will contain the value of the instruction that caused the exception
 // TRAPS: $rip will contain the value of the instruction after the instruction that caused the exception
 
-// TODO: figure out how to make it safe
-// Division Error (Fault)
-//      Occurs when dividing any number by 0 using the DIV or IDIV instruction
-void exception_handler_0(isr_frame_t *frame);
-void exception_handler_0(isr_frame_t *frame)
-{
-    print_exception_msg("Exception 0 caught (fault): divide by zero, continuing...\n");
-    frame->base_frame.rip += 2;
-}
+// // Debug (Trap)
+// //      Instruction fetch breakpoint (Fault)
+// //      General detect condition (Fault)
+// //      Data read or write breakpoint (Trap)
+// //      I/O read or write breakpoint (Trap)
+// //      Single-step (Trap)
+// //      Task-switch (Trap)
+// // void exception_handler_1(isr_frame_t *frame);
+// // void exception_handler_1(isr_frame_t *frame)
+// // {
+// //     print_exception_msg("Exception 1 caught (trap): debug interrupt, continuing...\n");
+// // }
 
-// Debug (Trap)
-//      Instruction fetch breakpoint (Fault)
-//      General detect condition (Fault)
-//      Data read or write breakpoint (Trap)
-//      I/O read or write breakpoint (Trap)
-//      Single-step (Trap)
-//      Task-switch (Trap)
-void exception_handler_1(isr_frame_t *frame);
-void exception_handler_1(isr_frame_t *frame)
-{
-    print_exception_msg("Exception 1 caught (trap): debug interrupt, continuing...\n");
-}
-
-// https://wiki.osdev.org/Non_Maskable_Interrupt
-void exception_handler_2(isr_frame_t *frame);
-void exception_handler_2(isr_frame_t *frame)
-{
-    print_exception_msg("Exception 2 caught (interrupt): non-maskable interrupt, continuing...\n");
-}
+// // https://wiki.osdev.org/Non_Maskable_Interrupt
+// void exception_handler_2(isr_frame_t *frame);
+// void exception_handler_2(isr_frame_t *frame)
+// {
+//     print_exception_msg("Exception 2 caught (interrupt): non-maskable interrupt, continuing...\n");
+// }
 
 // Invalid Opcode
 //      The Invalid Opcode exception occurs when the processor tries to execute an invalid or undefined opcode, or an instruction with invalid prefixes. It also occurs in other cases, such as:
