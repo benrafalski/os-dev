@@ -51,7 +51,7 @@ void main()
         kputs("+--------------------------------------+\n");
     }
 
-    // for(;;);
+    for(;;); //0x268f:
     
     // for(int i = 0; i < 1; i++){
     //     uint64_t temp;
@@ -88,7 +88,7 @@ void main()
     // *i = 0;
 
 
-    __asm__ __volatile__("int $2;");
+    __asm__ __volatile__("int $1;");
 
     // int i = 0;
     // int j = 100/i;
