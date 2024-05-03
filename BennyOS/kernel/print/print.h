@@ -166,3 +166,5 @@ void print_exception_msg(const char *msg)
     kputs(msg);
     set_color(color & 0xf, color & 0xf0);
 }
+
+// void change_color()

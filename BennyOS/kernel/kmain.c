@@ -22,17 +22,6 @@ void interrupt(){
 
 void main()
 {
-    // if(val){
-    //     kputs("hrere");
-    //     for(;;) {
-    //         asm("hlt");
-    //     }
-
-    // }
-
-    // val = 1;
-
-
     // set_color(WHITE_FGD, BLUE_BGD);
     set_color(LIGHT_GREEN_FGD, DARK_GRAY_BGD);
     clear_screen();
@@ -51,7 +40,7 @@ void main()
         kputs("+--------------------------------------+\n");
     }
 
-    for(;;); //0x268f:
+    // for(;;); //0x268f:
     
     // for(int i = 0; i < 1; i++){
     //     uint64_t temp;
@@ -84,11 +73,11 @@ void main()
     pic_clear_mask(2);
     idt_set_descriptor(0x21, isr_stub_table[0x21], PRESENT|DPL_0|INT_GATE);
 
-    // char* i = 0xdeadbeef;
-    // *i = 0;
+    char* i = (char*)0xdeadbeef;
+    *i = 0;
 
 
-    __asm__ __volatile__("int $1;");
+    // __asm__ __volatile__("int $2;");
 
     // int i = 0;
     // int j = 100/i;

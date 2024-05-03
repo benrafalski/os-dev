@@ -2,6 +2,8 @@
 ; global kernel_entry
 ; [bits 16]
 KERNEL_OFFSET equ 0x1000
+; kernel size = 16897, num_sectors = kernel_size/512 = 33
+; NUM_SECTORS equ 30
 
 mov [BOOT_DRIVE], dl
 
@@ -34,7 +36,7 @@ load_kernel:
     ; mov ax, 0x5000
     ; mov es, ax
     mov bx, KERNEL_OFFSET
-    mov dh, 20  ; issue... it wasn't loading the rest of the kernel...
+    mov dh, 33  ; issue... it wasn't loading the rest of the kernel...
     mov dl, [BOOT_DRIVE]
     call disk_load
 

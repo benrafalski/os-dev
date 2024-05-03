@@ -79,7 +79,6 @@ typedef struct
 #define X86_VC_FAULT 29     // VMM communication exception fault
 #define X86_SX_FAULT 30     // security exception fault 
 
-
 void halt(){
     while (true)
     {
@@ -87,56 +86,44 @@ void halt(){
     }
 }
 
-
 void do_divide_zero(isr_frame_t *frame);
 void do_divide_zero(isr_frame_t *frame){
     print_exception_msg("Division Error (cannot divide by 0 using DIV or IDIV). Halting...");
-    // kprintf("$rip: 0x%x", frame->base_frame.rip);
-    halt();
 }
-
 
 void do_debug(isr_frame_t *frame);
 void do_debug(isr_frame_t *frame){
     print_exception_msg("Debug. Halting...");
-    halt();
     
 }
 
 void do_nmi(isr_frame_t *frame);
 void do_nmi(isr_frame_t *frame){
     print_exception_msg("Non-Maskable Interrupt. Halting...");
-    halt();
     
 }
 
 void do_breakpoint(isr_frame_t *frame);
 void do_breakpoint(isr_frame_t *frame){
     print_exception_msg("Breakpoint (INT3 has been executed). Halting...");
-    halt();
     
 }
 
 void do_overflow(isr_frame_t *frame);
 void do_overflow(isr_frame_t *frame){
-    print_exception_msg("Overflow (INTO instruction with RFLAGS.OVERFLOW==1 ). Halting...");
-    halt();
+    print_exception_msg("Overflow (INTO instruction with RFLAGS.OVERFLOW==1). Halting...");
     
 }
-
 
 void do_bound_range_exceeded(isr_frame_t *frame);
 void do_bound_range_exceeded(isr_frame_t *frame){
     print_exception_msg("Bound Range Exceeded (Error during BOUND instruction). Halting...");
-    halt();
     
 }
-
 
 void do_invalid_opcode(isr_frame_t *frame);
 void do_invalid_opcode(isr_frame_t *frame){
     print_exception_msg("Invalid Opcode (undefined opcode has been executed). Halting...");
-    halt();
     
 }
 
@@ -144,52 +131,36 @@ void do_invalid_opcode(isr_frame_t *frame){
 void do_device_not_available(isr_frame_t *frame);
 void do_device_not_available(isr_frame_t *frame){
     print_exception_msg("Device Not Available (FPU instruction but there is no FPU). Halting...");
-    halt();
     
 }
-
-
 
 void do_double_fault(isr_frame_t *frame);
 void do_double_fault(isr_frame_t *frame){
     print_exception_msg("Double Fault (exception occured during another exception handler). Halting...");
-    halt();
     
 }
-
-
 
 void do_invalid_tss(isr_frame_t *frame);
 void do_invalid_tss(isr_frame_t *frame){
     print_exception_msg("Invalid TSS (invalid segment during task switch). Halting...");
-    halt();
     
 }
-
-
 
 void do_segment_not_present(isr_frame_t *frame);
 void do_segment_not_present(isr_frame_t *frame){
     print_exception_msg("Segment Not Present (segment/gate loaded with PRESENT==0). Halting...");
-    halt();
     
 }
-
-
 
 void do_stack_segment_fault(isr_frame_t *frame);
 void do_stack_segment_fault(isr_frame_t *frame){
     print_exception_msg("Stack Segment Fault (multiple reasons for this). Halting...");
-    halt();
     
 }
-
-
 
 void do_general_protection_fault(isr_frame_t *frame);
 void do_general_protection_fault(isr_frame_t *frame){
     print_exception_msg("General Protection Fault (multiple reasons for this). Halting...");
-    halt();
     
 }
 
@@ -198,7 +169,6 @@ void do_general_protection_fault(isr_frame_t *frame){
 void do_page_fault(isr_frame_t *frame);
 void do_page_fault(isr_frame_t *frame){
     print_exception_msg("Page Fault (multiple reasons for this). Halting...");
-    halt();
     
 }
 
@@ -206,71 +176,86 @@ void do_page_fault(isr_frame_t *frame){
 
 void do_x87_floating_point_exception(isr_frame_t *frame);
 void do_x87_floating_point_exception(isr_frame_t *frame){
-    print_exception_msg("x87 Floating Point Exception (FWAIT/WAIT executed with CR0.NE==1 && an ummasked #MF is pending). Halting...");
-    halt();
-    
+    print_exception_msg("x87 Floating Point Exception (FWAIT/WAIT executed with CR0.NE==1 && an ummasked #MF is pending). Halting...");    
 }
 
 
 
 void do_alignment_check(isr_frame_t *frame);
 void do_alignment_check(isr_frame_t *frame){
-    print_exception_msg("Alignment Check (do to unaligned memory data reference). Halting...");
-    halt();
-    
+    print_exception_msg("Alignment Check (do to unaligned memory data reference). Halting...");    
 }
 
 void do_machine_check(isr_frame_t *frame);
 void do_machine_check(isr_frame_t *frame){
-    print_exception_msg("Machine Check (processor detected internal error). Halting...");
-    halt();
-    
+    print_exception_msg("Machine Check (processor detected internal error). Halting...");    
 }
 
-// 13f2
 void do_smid_floating_point_exception(isr_frame_t *frame);
 void do_smid_floating_point_exception(isr_frame_t *frame){
-    print_exception_msg("SMID Floating-Point Exception (unmasked 128-bit media float error occured). Halting...");
-    halt();
-    
+    print_exception_msg("SMID Floating-Point Exception (unmasked 128-bit media float error occured). Halting...");    
 }
 
 
 void do_virtualization_exception(isr_frame_t *frame);
 void do_virtualization_exception(isr_frame_t *frame){
-    print_exception_msg("Virtualization Exception. Halting...");
-    halt();
-    
+    print_exception_msg("Virtualization Exception. Halting...");    
 }
 
 void do_control_protection_exception(isr_frame_t *frame);
 void do_control_protection_exception(isr_frame_t *frame){
-    print_exception_msg("Control Protection Exception. Halting...");
-    halt();
-    
+    print_exception_msg("Control Protection Exception. Halting...");    
 }
 
 void do_hypervisor_injection_exception(isr_frame_t *frame);
 void do_hypervisor_injection_exception(isr_frame_t *frame){
-    print_exception_msg("Hypervisor Injection Exception. Halting...");
-    halt();
-    
+    print_exception_msg("Hypervisor Injection Exception. Halting...");    
 }
 
 void do_vmm_communication_exception(isr_frame_t *frame);
 void do_vmm_communication_exception(isr_frame_t *frame){
-    print_exception_msg("VMM Communication Exception. Halting...");
-    halt();
-    
+    print_exception_msg("VMM Communication Exception. Halting...");    
 }
 
 void do_security_exception(isr_frame_t *frame);
 void do_security_exception(isr_frame_t *frame){
-    print_exception_msg("Security Exception. Halting...");
-    halt();
-    
+    print_exception_msg("Security Exception. Halting...");    
 }
 
+// Keyboard Interrupt
+void exception_handler_33(isr_frame_t *frame);
+void exception_handler_33(isr_frame_t *frame)
+{
+    read_key();
+    pic_send_eoi(1);
+}
+
+void print_base_frame(isr_frame_t *frame){
+    //     struct
+    // {
+    //     uint64_t rbp;
+    //     uint64_t vector;
+    //     uint64_t error_code;
+    //     uint64_t rip;
+    //     uint64_t cs;
+    //     uint64_t rflags;
+    //     uint64_t rsp;
+    //     uint64_t dss;
+    // } base_frame;
+    // uint8_t color = get_color();
+    set_color(YELLOW_FGD, DARK_GRAY_BGD);
+    kprintf("INT%d ", frame->base_frame.vector);
+    kprintf(" (error code 0x%x)\n", frame->base_frame.error_code);
+    kprintf("RIP: 0x%x\n", frame->base_frame.rip);
+    kprintf("RBP: 0x%x ", frame->base_frame.rbp);
+    kprintf("; RSP: 0x%x\n", frame->base_frame.rsp);
+    kprintf("CS: 0x%x ", frame->base_frame.cs);
+    kprintf("; DSS: 0x%x ", frame->base_frame.dss);
+    kprintf("; RFLAGS: 0x%x\n", frame->base_frame.rflags);
+    set_color(LIGHT_GREEN_FGD, DARK_GRAY_BGD);
+    // print_exception_msg("here");
+    
+}
 
 __attribute__((noreturn)) void exception_handler(isr_frame_t *frame);
 void exception_handler(isr_frame_t *frame)
@@ -372,8 +357,11 @@ void exception_handler(isr_frame_t *frame)
         break;
 
     default:
+        print_exception_msg("Undefined interrupt has been executed. Halting...");
         break;
     }
+
+    print_base_frame(frame);
 
     halt();
     for(;;) {
@@ -489,11 +477,4 @@ void exception_handler(isr_frame_t *frame)
 // }
 
 
-// Keyboard Interrupt
-void exception_handler_33(isr_frame_t *frame);
-void exception_handler_33(isr_frame_t *frame)
-{
-    read_key();
-    pic_send_eoi(1);
-}
 
