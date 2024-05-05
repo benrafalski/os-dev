@@ -168,8 +168,69 @@ void do_general_protection_fault(isr_frame_t *frame){
 
 void do_page_fault(isr_frame_t *frame);
 void do_page_fault(isr_frame_t *frame){
-    print_exception_msg("Page Fault (multiple reasons for this). Halting...");
-    
+    //  31              15                             4               0
+    // +---+--  --+---+-----+---+--  --+---+----+----+---+---+---+---+---+
+    // |   Reserved   | SGX |   Reserved   | SS | PK | I | R | U | W | P |
+    // +---+--  --+---+-----+---+--  --+---+----+----+---+---+---+---+---+
+    uint64_t error = frame->base_frame.error_code;
+    // uint64_t cr2 = frame->control_registers.cr2;
+
+    set_color(RED_FGD, DARK_GRAY_BGD);
+    char temp1[4];
+    char* cr2_address = citoa(frame->control_registers.cr2, temp1, 16);
+    char temp2[24 + strlen(cr2_address)];
+    char* output_message = strcat("Page Fault at address 0x", cr2_address, temp2);
+    // print_exception_msg(output_message);
+
+    // set_color(LIGHT_GREEN_FGD, DARK_GRAY_BGD);
+
+    // return;
+
+
+    if(error & 1){
+        // When set, the page fault was caused by a page-protection violation. When not set, it was caused by a non-present page.
+        char* e = " (page protection violation). Halting...";
+        char temp3[strlen(output_message) + strlen(e)];
+        char* error_message = strcat(output_message, e, temp3);
+        print_exception_msg(error_message);
+    }else{
+        char* e = " (page not present). Halting...";
+        char temp3[strlen(output_message) + strlen(e)];
+        char* error_message = strcat(output_message, e, temp3);
+        print_exception_msg(error_message);
+
+        // print_exception_msg("Page Fault (page not present). Halting...");
+    }
+    // if(error & (1 << 1)){
+    //     // When set, the page fault was caused by a write access. When not set, it was caused by a read access.
+    //     print_exception_msg("Page Fault (write access violation). Halting...");
+    // }else{
+    //     print_exception_msg("Page Fault (read access violation). Halting...");
+    // }
+    // if(error & (1 << 2)){
+    //     // When set, the page fault was caused while CPL = 3. This does not necessarily mean that the page fault was a privilege violation.
+    //     print_exception_msg("Page Fault (CPL == 3). Halting...");
+    // }
+    // if(error & (1 << 3)){
+    //     // When set, one or more page directory entries contain reserved bits which are set to 1. This only applies when the PSE or PAE flags in CR4 are set to 1.
+    //     print_exception_msg("Page Fault (page directory entry contains reserved bits == 1). Halting...");
+    // }
+    // if(error & (1 << 4)){
+    //     // When set, the page fault was caused by an instruction fetch. This only applies when the No-Execute bit is supported and enabled.
+    //     print_exception_msg("Page Fault (instruction fetch when NX enabled). Halting...");
+    // }
+    // if(error & (1 << 5)){
+    //     // When set, the page fault was caused by a protection-key violation. The PKRU register (for user-mode accesses) or PKRS MSR (for supervisor-mode accesses) specifies the protection key rights.
+    //     print_exception_msg("Page Fault (protection key violation). Halting...");
+    // }
+    // if(error & (1 << 6)){
+    //     // When set, the page fault was caused by a shadow stack access.
+    //     print_exception_msg("Page Fault (shadow stack access). Halting...");
+    // }
+    // if(error & (1 << 15)){
+    //     // When set, the fault was due to an SGX violation. The fault is unrelated to ordinary paging.
+    //     print_exception_msg("Page Fault (SGX violation). Halting...");
+    // }
 }
 
 
