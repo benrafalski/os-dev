@@ -160,6 +160,17 @@ void do_stack_segment_fault(isr_frame_t *frame){
 
 void do_general_protection_fault(isr_frame_t *frame);
 void do_general_protection_fault(isr_frame_t *frame){
+    // A General Protection Fault may occur for various reasons. The most common are:
+    // Segment error (privilege, type, limit, read/write rights).
+    // Executing a privileged instruction while CPL != 0.
+    // Writing a 1 in a reserved register field or writing invalid value combinations (e.g. CR0 with PE=0 and PG=1).
+    // Referencing or accessing a null-descriptor.
+    // Accessing a memory address with bits 48-63 not matching bit 47 (e.g. 0x_0000_8000_0000_0000 instead of 0x_ffff_8000_0000_0000) in 64 bit mode.
+    // The saved instruction pointer points to the instruction which caused the exception.
+    // Error code: The General Protection Fault sets an error code, which is the segment selector index when the exception is segment related. Otherwise, 0.
+
+    // b *0x81b6
+
     print_exception_msg("General Protection Fault (multiple reasons for this). Halting...");
     
 }
@@ -173,75 +184,50 @@ void do_page_fault(isr_frame_t *frame){
     // |   Reserved   | SGX |   Reserved   | SS | PK | I | R | U | W | P |
     // +---+--  --+---+-----+---+--  --+---+----+----+---+---+---+---+---+
     uint64_t error = frame->base_frame.error_code;
-    // uint64_t cr2 = frame->control_registers.cr2;
-
-    // set_color(RED_FGD, DARK_GRAY_BGD);
-
-
-    // char* str1 = "hello ";
-    // char* str2 = "world";
-
-    // strcat(str1, str2);
-    // kputs(str1);
-
-    // // 0x1ff6
-    // // 0x2171
-
-    // char temp1[8];
-    // char* cr2_address = citoa(frame->control_registers.cr2, temp1, 16);
-    // char temp2[32];
-    // char* output_message = strcat("Page Fault at address 0x", cr2_address, temp2);
-
-    char str1[100] = "Page Fault at address 0x";
+    char error_msg[200] = "Page Fault at address 0x";
     char temp1[17];
     char* cr2_address = citoa(frame->control_registers.cr2, temp1, 16);
-    // char* cr2_address = "deadbeef";
-    strcat(str1, cr2_address);
-    // kputs(str1);
-
-
-
+    strcat(error_msg, cr2_address);
 
     if(error & 1){
         // When set, the page fault was caused by a page-protection violation. When not set, it was caused by a non-present page.
-        strcat(str1, " (page protection violation");
+        strcat(error_msg, " (page protection violation");
     }else{
-        strcat(str1, " (page not present");
+        strcat(error_msg, " (page not present");
     }
     if(error & (1 << 1)){
         // When set, the page fault was caused by a write access. When not set, it was caused by a read access.
-        strcat(str1, ", write access violation");
+        strcat(error_msg, ", write access violation");
     }else{
-        strcat(str1, ", read access violation");
+        strcat(error_msg, ", read access violation");
     }
     if(error & (1 << 2)){
         // When set, the page fault was caused while CPL = 3. This does not necessarily mean that the page fault was a privilege violation.
-        strcat(str1, ", CPL==3 violation");
+        strcat(error_msg, ", CPL==3 violation");
     }
-
-    // for(;;);
     if(error & (1 << 3)){
         // When set, one or more page directory entries contain reserved bits which are set to 1. This only applies when the PSE or PAE flags in CR4 are set to 1.
-        strcat(str1, ", page directory entry contains reserved bits == 1");
+        strcat(error_msg, ", page directory entry contains reserved bits == 1");
     }
-    // if(error & (1 << 4)){
-    //     // When set, the page fault was caused by an instruction fetch. This only applies when the No-Execute bit is supported and enabled.
-    //     // print_exception_msg("Page Fault (instruction fetch when NX enabled). Halting...");
-    // }
-    // if(error & (1 << 5)){
-    //     // When set, the page fault was caused by a protection-key violation. The PKRU register (for user-mode accesses) or PKRS MSR (for supervisor-mode accesses) specifies the protection key rights.
-    //     print_exception_msg("Page Fault (protection key violation). Halting...");
-    // }
-    // if(error & (1 << 6)){
-    //     // When set, the page fault was caused by a shadow stack access.
-    //     print_exception_msg("Page Fault (shadow stack access). Halting...");
-    // }
-    // if(error & (1 << 15)){
-    //     // When set, the fault was due to an SGX violation. The fault is unrelated to ordinary paging.
-    //     print_exception_msg("Page Fault (SGX violation). Halting...");
-    // }
+    if(error & (1 << 4)){
+        // When set, the page fault was caused by an instruction fetch. This only applies when the No-Execute bit is supported and enabled.
+        strcat(error_msg, ", instruction fetch when NX enabled");
+    }
+    if(error & (1 << 5)){
+        // When set, the page fault was caused by a protection-key violation. The PKRU register (for user-mode accesses) or PKRS MSR (for supervisor-mode accesses) specifies the protection key rights.
+        strcat(error_msg, ", protection key violation");
+    }
+    if(error & (1 << 6)){
+        // When set, the page fault was caused by a shadow stack access.
+        strcat(error_msg, ", shadow stack access");
+    }
+    if(error & (1 << 15)){
+        // When set, the fault was due to an SGX violation. The fault is unrelated to ordinary paging.
+        strcat(error_msg, ", SGX violation");
+    }
 
-    print_exception_msg(str1);
+    strcat(error_msg, "). Halting...");
+    print_exception_msg(error_msg);
 }
 
 

@@ -64,25 +64,6 @@ int strlen(const char* str) {
     return len;
 }
 
-// char* strcat(const char* str1, const char* str2, char* cat){
-//     int len1 = strlen(str1);
-//     int len2 = strlen(str2);
-
-//     for(int i = 0; i < len1; i++){
-//         cat[i] = str1[i];
-//     }
-
-//     for(int i = 0; i < len2; i++){
-//         cat[i+len1] = str2[i];
-//     }
-
-//     cat[len1+len2] = '\0';
-
-
-//     return cat;
-
-// }
-
 char *strcat(char* dest, const char* src){
     char * tmp = dest;
     while (*tmp != '\0') {

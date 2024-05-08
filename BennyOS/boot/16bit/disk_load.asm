@@ -18,7 +18,7 @@ disk_load:
     ; pop dx
     ; mov bx, dx
     ; call print_hex
-    jc disk_error
+    jc disk_error ; 0x7c1e
 
     ; check if dh (num sectors expected) == al (num sectors read)
     pop dx

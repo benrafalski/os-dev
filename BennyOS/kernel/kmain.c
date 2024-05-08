@@ -68,7 +68,7 @@ void main()
     pic_disable();
     pic_remapping(0x20);
 
-    return;
+    // return;
     
 
     // intialize the IDT
@@ -82,8 +82,8 @@ void main()
     pic_clear_mask(2);
     idt_set_descriptor(0x21, isr_stub_table[0x21], PRESENT|DPL_0|INT_GATE);
 
-    // char* i = (char*)0xdeadbeef;
-    // *i = 0;
+    char* i = (char*)0xdeadbeef;
+    *i = 0;
 
 
     // __asm__ __volatile__("int $2;");

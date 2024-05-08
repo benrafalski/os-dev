@@ -1,14 +1,14 @@
 [org 0x7c00]
 ; global kernel_entry
 ; [bits 16]
-KERNEL_OFFSET equ 0x1000
+KERNEL_OFFSET equ 0x8000
 ; kernel size = 16897, num_sectors = kernel_size/512 = 33
 ; NUM_SECTORS equ 30
 
 mov [BOOT_DRIVE], dl
 
 ; init the stack
-mov bp, 0x8000
+mov bp, 0x1000
 mov sp, bp
 
 ; num heads = 14
