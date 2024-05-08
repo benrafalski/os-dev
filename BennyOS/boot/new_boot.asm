@@ -11,6 +11,16 @@ mov [BOOT_DRIVE], dl
 mov bp, 0x8000
 mov sp, bp
 
+; num heads = 14
+; num sectors per track = 63
+
+; mov ah, 8
+; mov dl, [BOOT_DRIVE]
+; int 0x13
+
+; mov ah, dh
+; mov bh, ch
+
 call load_kernel
 
 ; jmp $
@@ -36,8 +46,9 @@ load_kernel:
     ; mov ax, 0x5000
     ; mov es, ax
     mov bx, KERNEL_OFFSET
-    mov dh, 33  ; issue... it wasn't loading the rest of the kernel...
+    mov dh, 41  ; issue... it wasn't loading the rest of the kernel...
     mov dl, [BOOT_DRIVE]
+
     call disk_load
 
     ret

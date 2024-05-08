@@ -23,15 +23,12 @@ void interrupt(){
 void main()
 {
     // set_color(WHITE_FGD, BLUE_BGD);
-    set_color(LIGHT_GREEN_FGD, DARK_GRAY_BGD);
-    clear_screen();
-    // map_kernel();
-    // for(;;);
-    // good
-    if(check_apic()){
-        // these strings are at 0x3118 when clearscreen is called is asm these are nowhere to be found
-        // on the good version they are located at 0x2118...hmmm
-        kputs("+--------------------------------------+");
+    set_color(LIGHT_GREEN_FGD, DARK_GRAY_BGD); // 0x2770
+    clear_screen(); // 0x277a
+
+
+    if(check_apic()){ // 0x277f
+        kputs("+--------------------------------------+"); // 0x279b
         kputs("|Hello from the kernel! APIC IS allowed|");
         kputs("+--------------------------------------+\n");
     }else{
@@ -39,6 +36,8 @@ void main()
         kputs("Hello from the kernel! APIC NOT allowed");
         kputs("+--------------------------------------+\n");
     }
+
+    // return;
 
     // for(;;); //0x268f:
     
@@ -54,6 +53,8 @@ void main()
     //     // kprintf("addr: 0x%x; ", 0xc000+i);
     //     // kprintf("val: 0x%x\n", temp);
     // }   
+
+
     
     // for(;;) {
     //     asm("hlt");
@@ -61,20 +62,28 @@ void main()
 
     kprintf(">:  ", 0);
 
+    
+
     // remap PIC
     pic_disable();
     pic_remapping(0x20);
 
+    return;
+    
+
     // intialize the IDT
+    // breaks here
     idt_init();
+
+    // return;
 
     // enable keyboard interrupts
     pic_clear_mask(1);
     pic_clear_mask(2);
     idt_set_descriptor(0x21, isr_stub_table[0x21], PRESENT|DPL_0|INT_GATE);
 
-    char* i = (char*)0xdeadbeef;
-    *i = 0;
+    // char* i = (char*)0xdeadbeef;
+    // *i = 0;
 
 
     // __asm__ __volatile__("int $2;");
