@@ -40,6 +40,10 @@ char scancode_ascii(const char scan_code)
 }
 
 char read_key(void){
+
+
+    // for(int i = 10000000; i > 0; i--);
+
     uint16_t pos = get_cursor_position();
     int x = pos % VGA_WIDTH;
     int y = pos / VGA_WIDTH;
@@ -63,7 +67,7 @@ char read_key(void){
                 print_char(' ', x-1, y);
                 update_cursor(x-1, y);
                 buffer--;
-                buff[buffer] = ' ';
+                buff[buffer] = 0;
             }
             else if(key == SPACE){
                 buff[buffer] = ' ';
@@ -72,13 +76,20 @@ char read_key(void){
                 buffer++;
             } 
             else if(key == ENTER){
-reset:
+                // kputs("hello");
+
                 kputs("");
                 kputs(buff);
-                kprintf(">:  ", 0);
-                
+
+                // for(int i = 0; i < strlen(10); i)
+
+                if(strcmp("clear", buff)) clear_screen();
+                // In newer versions of QEMU, you can do shutdown with
+                if(strcmp("exit", buff)) outw(0x604, 0x2000);
+reset:                
                 for(int i = 0; i < buffer; i++) buff[i] = 0;
                 buffer = 0;
+                kprintf(">:  ", 0);
             } else if (key != BACKSPACE){
                 buff[buffer] = key;
                 print_char(key, x, y);
@@ -87,5 +98,7 @@ reset:
             }
         }
     }
+
+exit:
     return key;
 }

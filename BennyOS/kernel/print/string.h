@@ -78,3 +78,19 @@ char *strcat(char* dest, const char* src){
     *tmp='\0';
     return dest;
 }
+
+int strcmp(const char* s1, const char* s2){
+    int len1 = strlen(s1);
+    int len2 = strlen(s2);
+    if(len1 != len2) return 0;
+    
+    while(*s1 != '\0' && *s2 != '\0'){
+        if(*s1 != *s2){
+            return 0;
+        }
+        s1++;
+        s2++;
+    }
+
+    return 1;
+}

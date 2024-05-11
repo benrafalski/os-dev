@@ -71,3 +71,29 @@ void mem(void){
     // kputs(hex5);
 
 }
+
+
+// int 0x12 ; ax = 0x27f = 639 KB = 639,000 bytes
+
+// usable memory
+
+// LOW MEMORY (< 1MB)
+// 0x00000500	0x00007BFF	29.75 KiB	Conventional memory	usable memory
+// 0x00007C00	0x00007DFF	512 bytes	Your OS BootSector
+// 0x00007E00	0x0007FFFF  480.5 KiB	Conventional memory = 0x0007FFFF or 491,519 bytes
+
+// Extended Memory
+// 0x00100000	0x00EFFFFF	0x00E00000 (14 MiB)	RAM -- free for use (if it exists)
+// 0x01000000	 ????????	 ???????? (whatever exists)	RAM -- free for use
+// 0x0000000100000000 (possible memory above 4 GiB)	 ????????????????	 ???????????????? (whatever exists)	RAM -- free for use (PAE/64bit)
+
+
+
+// Page tables
+// PML4 = 0x2000
+// PML4[0] = PDPT = 0x3000
+// PDPT[0] = PDT = 0x4000
+// PDT[0] -> PT = 0x5000
+
+// Kernel = 0x8000 - 0x28000 (131,072 bytes)
+

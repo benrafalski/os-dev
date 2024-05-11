@@ -8,18 +8,14 @@ KERNEL_OFFSET equ 0x8000
 mov [BOOT_DRIVE], dl
 
 ; init the stack
-mov bp, 0x1000
+mov bp, 0x7e00
 mov sp, bp
 
 ; num heads = 14
 ; num sectors per track = 63
 
-; mov ah, 8
-; mov dl, [BOOT_DRIVE]
-; int 0x13
 
-; mov ah, dh
-; mov bh, ch
+; jmp $ ; 7c0b
 
 call load_kernel
 
