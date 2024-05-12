@@ -6,14 +6,18 @@
 #define USED 0x2000
 
 
-// 1. 8 pages are allocated
-// 2. linked list where each page points to the next page
-// 3. when one page is full, we go to the next page
+// 1. allocate a page
 
 typedef struct {
-    uint64_t* page_list_head;
+    uint64_t* ptr;
+    buddy_allocator_t* next;
 } buddy_allocator_t;
 
+
+buddy_allocator_t* head;
+
+head->ptr = 0;
+head->next = 0;
 
 uint8_t get_max_phys_addr(void)
 {
@@ -39,56 +43,80 @@ bool is_valid_canonical(uint64_t addr){
     return false;
 }
 
+
+// maps 0x1000 (4096 bytes) to RAM
 void map_page(uint64_t paddr, uint64_t vaddr){
     paddr &= ~(0xFFF);
     vaddr &= ~(0xFFF);
 
     uint64_t *pml4 = (uint64_t*)0x2000;
-    uint64_t *pdpt = (uint64_t*)0x3000;
-    uint64_t *pd = (uint64_t*)0x4000;
-    uint64_t *pt = (uint64_t*)0x5000;
+    uint64_t *pdpt = (uint64_t*)0x100000;
+    uint64_t *pd = (uint64_t*)0x101000;
+    uint64_t *pt = (uint64_t*)0x102000;
     uint64_t *page = (uint64_t*)paddr;
 
     uint64_t pml4_i = (vaddr >> 39) & 0x1ff;
-    uint16_t pdpt_i = (vaddr >> 30) & 0x1ff;
-    uint16_t pd_i = (vaddr >> 21) & 0x1ff;
-    uint16_t pt_i = (vaddr >> 12) & 0x1ff;
+    uint64_t pdpt_i = (vaddr >> 30) & 0x1ff;
+    uint64_t pd_i = (vaddr >> 21) & 0x1ff;
+    uint64_t pt_i = (vaddr >> 12) & 0x1ff;
 
-    pml4[pml4_i] = (uint64_t)0x3003;
-    pdpt[pdpt_i] = (uint64_t)0x4003;
-    pd[pd_i] = (uint64_t)0x5003;
+    pml4[pml4_i] = (uint64_t)0x100003;
+    pdpt[pdpt_i] = (uint64_t)0x101003;
+    pd[pd_i] = (uint64_t)0x102003;
     pt[pt_i] = (uint64_t)(paddr | 3);
 }
 
-
-void map_kernel(){
-    // kernel code = 0xFFFFFFFF80000000-0xFFFFFFFFA0000000
-    uint64_t kstart = 0xFFFFFFFF80000000;
-    uint64_t kend = 0xFFFFFFFF00001000;
-
-    uint64_t phys = 0x1000;
-    while(kstart < kend){
-        map_page(phys, kstart);
-        phys += 0x1000;
-        kstart += 0x1000;
+// maps 0x200000 (2,097,152 bytes) to RAM
+void map_block(uint64_t pstart, uint64_t vstart){
+    for(int i = 0; i < 512; i++){
+        map_page(pstart, vstart);
+        pstart += 0x1000;
+        vstart += 0x1000;
     }
-
-}
-
-
-void mem(void){
-    // map_kernel();
-    // map_page(0x1000, 0xdeadb000);
-    map_page(0x300000, 0xFFFFC90000000000);
-    // uint64_t *ptr = (uint64_t*)0xdeadb000;
-    // uint64_t temp1 = *ptr;
-    // char str3[10];
-    // char* hex5 = citoa(temp1, str3, 16);
-    // kputs(hex5);
-
 }
 
 void* kmalloc(uint64_t size){
+
+    uint64_t size_real;
+
+    if(size <= 8){
+        // malloc 8
+        size_real = 8;
+    }else if(size <= 16 && size > 8){
+        // mallic 16
+        size_real = 16;
+    }else if(size <= 32 && size > 16){
+        // malloc 32
+        size_real = 32;
+    }else if(size <= 64 && size > 32){
+        // malloc 64
+        size_real = 64;
+    }else if(size <= 128 && size > 64){
+        // malloc 128
+        size_real = 128;
+    }else if(size <= 256 && size > 128){
+        // malloc 256
+        size_real = 256;
+    }else if(size <= 512 && size > 256){
+        // malloc 512
+        size_real = 512;
+    }else if(size <= 1024 && size > 512){
+        // malloc 1024
+        size_real = 1024;
+    }else if(size <= 2048 && size > 1024){
+        // malloc 2048
+        size_real = 2048;
+    }else if(size <= 4096 && size > 2048){
+        // malloc 4096
+        size_real = 4096;
+    }
+
+    if(!head->ptr){
+        kputs("here");
+    }
+    else{
+        kputs("there");
+    }
 
 }
 
@@ -128,9 +156,9 @@ void kfree(void* ptr){
 // 0x0-0x1ffff8 is identity mapped at 0x5000
 
 // kernel heap
-// 0xFFFFC90000000000 - 0xFFFFEA0000000000 virtual address
-// 0x300000 is metadata stuff
-// 0x400000 is where the actual heap starts
+// currently 0xFFFFC90000000000 - 0xFFFFC90000200000 is the heap virtual space
+// currently 0x300000 - 0x500000 is the heap physical space
+
 
 // Kernel = 0x8000 - 0x28000 (131,072 bytes)
 
