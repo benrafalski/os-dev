@@ -84,6 +84,43 @@ void main()
 
 
     // __asm__ __volatile__("int $2;");
+
+    // uint64_t* ptr = (uint64_t*)0x1ff070;
+    // *ptr = (uint64_t)0xdeadbeef;
+
+
+    uint64_t paddr = 0x300000;
+    paddr &= ~(0xFFF);
+
+    uint64_t vaddr = 0xFFFFC90000000000;
+    vaddr &= ~(0xFFF);
+
+    uint64_t *pml4 = (uint64_t*)0x2000;
+    uint64_t *pdpt = (uint64_t*)0x6000;
+    uint64_t *pd = (uint64_t*)0x4000;
+    uint64_t *pt = (uint64_t*)0x5000;
+    uint64_t *page = (uint64_t*)paddr;
+
+    pml4[1] = (uint64_t)0x6003;
+    pdpt[0] = (uint64_t)0x7003;
+    pd[pd_i] = (uint64_t)0x5003;
+
+
+
+
+
+    // uint64_t pstart = 0x400000;
+    // uint64_t vstart = 0xFFFFC90000000000;
+
+    // for(int i = 0; i < 7; i++){
+    //     map_page(pstart, vstart);
+    //     pstart += 0x1000;
+    //     vstart += 0x1000;
+    // }
+
+    // uint64_t* ptr = (uint64_t*)0xFFFFC90000004000;
+    // *ptr = (uint64_t)0xdeadbeef;
+
     
     for(;;) {
         asm("hlt");

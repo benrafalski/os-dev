@@ -76,16 +76,17 @@ char read_key(void){
                 buffer++;
             } 
             else if(key == ENTER){
-                // kputs("hello");
-
-                kputs("");
-                kputs(buff);
-
-                // for(int i = 0; i < strlen(10); i)
 
                 if(strcmp("clear", buff)) clear_screen();
                 // In newer versions of QEMU, you can do shutdown with
-                if(strcmp("exit", buff)) outw(0x604, 0x2000);
+                else if(strcmp("exit", buff)) outw(0x604, 0x2000);
+
+                else {
+                    kputs("");
+                    char msg[1000] = "Unrecognized command: ";
+                    strcat(msg, buff);
+                    kputs(msg);
+                }
 reset:                
                 for(int i = 0; i < buffer; i++) buff[i] = 0;
                 buffer = 0;

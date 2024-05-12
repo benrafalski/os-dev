@@ -15,7 +15,7 @@ setup_paging:
     ; PDT[0] -> PT.
     ; PT -> 0x00000000 - 0x00200000.
     ; First we will clear the tables:
-    mov edi, 0x2000    ; Set the destination index to 0x9000.
+    mov edi, 0x2000    ; Set the destination index to 0x2000.
     mov cr3, edi       ; Set control register 3 to the destination index.
     xor eax, eax       ; Nullify the A-register.
     mov ecx, 4096      ; Set the C-register to 4096.
@@ -36,7 +36,7 @@ setup_paging:
     mov DWORD [edi], 0x5003      ; Set the uint32_t at the destination index to 0x4003.
     add edi, 0x1000              ; Add 0x1000 to the destination index.
 
-    ;  Now all that's left to do is identity map the first two megabytes:
+    ;  Now all that's left to do is identity map the first two megabytes (2000 kb, 2,000,000 bytes):
     mov ebx, 0x00000003          ; Set the B-register to 0x00000003.
     mov ecx, 512                 ; Set the C-register to 512.
  
