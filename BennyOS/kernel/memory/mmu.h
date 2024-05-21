@@ -8,16 +8,16 @@
 
 // 1. allocate a page
 
-typedef struct {
-    uint64_t* ptr;
-    buddy_allocator_t* next;
-} buddy_allocator_t;
+// typedef struct {
+//     uint64_t* ptr;
+//     buddy_allocator_t* next;
+// } buddy_allocator_t;
 
 
-buddy_allocator_t* head;
+// buddy_allocator_t* head;
 
-head->ptr = 0;
-head->next = 0;
+// head->ptr = 0;
+// head->next = 0;
 
 uint8_t get_max_phys_addr(void)
 {
@@ -75,54 +75,54 @@ void map_block(uint64_t pstart, uint64_t vstart){
     }
 }
 
-void* kmalloc(uint64_t size){
+// void* kmalloc(uint64_t size){
 
-    uint64_t size_real;
+//     uint64_t size_real;
 
-    if(size <= 8){
-        // malloc 8
-        size_real = 8;
-    }else if(size <= 16 && size > 8){
-        // mallic 16
-        size_real = 16;
-    }else if(size <= 32 && size > 16){
-        // malloc 32
-        size_real = 32;
-    }else if(size <= 64 && size > 32){
-        // malloc 64
-        size_real = 64;
-    }else if(size <= 128 && size > 64){
-        // malloc 128
-        size_real = 128;
-    }else if(size <= 256 && size > 128){
-        // malloc 256
-        size_real = 256;
-    }else if(size <= 512 && size > 256){
-        // malloc 512
-        size_real = 512;
-    }else if(size <= 1024 && size > 512){
-        // malloc 1024
-        size_real = 1024;
-    }else if(size <= 2048 && size > 1024){
-        // malloc 2048
-        size_real = 2048;
-    }else if(size <= 4096 && size > 2048){
-        // malloc 4096
-        size_real = 4096;
-    }
+//     if(size <= 8){
+//         // malloc 8
+//         size_real = 8;
+//     }else if(size <= 16 && size > 8){
+//         // mallic 16
+//         size_real = 16;
+//     }else if(size <= 32 && size > 16){
+//         // malloc 32
+//         size_real = 32;
+//     }else if(size <= 64 && size > 32){
+//         // malloc 64
+//         size_real = 64;
+//     }else if(size <= 128 && size > 64){
+//         // malloc 128
+//         size_real = 128;
+//     }else if(size <= 256 && size > 128){
+//         // malloc 256
+//         size_real = 256;
+//     }else if(size <= 512 && size > 256){
+//         // malloc 512
+//         size_real = 512;
+//     }else if(size <= 1024 && size > 512){
+//         // malloc 1024
+//         size_real = 1024;
+//     }else if(size <= 2048 && size > 1024){
+//         // malloc 2048
+//         size_real = 2048;
+//     }else if(size <= 4096 && size > 2048){
+//         // malloc 4096
+//         size_real = 4096;
+//     }
 
-    if(!head->ptr){
-        kputs("here");
-    }
-    else{
-        kputs("there");
-    }
+//     if(!head->ptr){
+//         kputs("here");
+//     }
+//     else{
+//         kputs("there");
+//     }
 
-}
+// }
 
-void kfree(void* ptr){
+// void kfree(void* ptr){
 
-}
+// }
 
 
 // int 0x12 ; ax = 0x27f = 639 KB = 639,000 bytes
@@ -167,4 +167,10 @@ void kfree(void* ptr){
 // "Heap" (Dynamic Memory Management)
 // Virtual Memory Management
 // Physical Memory Management
+
+
+
+
+// PMM
+// 1. 
 

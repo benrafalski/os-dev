@@ -1,6 +1,7 @@
 #include "cpuid.h"
 #include "print/print.h"
 #include "interrupts/init_idt.h"
+#include "memory/pmm.h"
 #include "memory/mmu.h"
 
 
@@ -84,7 +85,20 @@ void main()
 
     // map_block(0x300000, 0xFFFFC90000000000);
 
-    kmalloc(20);
+    // kmalloc(20);
+
+    // map_page(0x7FFF000, 0xFFFFC90000000000);
+
+
+    // char* test = (char*)0xFFFFC90000000000;
+    // test[0] = 'w';
+
+    // kputs(test);
+
+    // init_physmem();
+
+
+    // kprintf("%x\n", 0x5);
     
     for(;;) {
         asm("hlt");
