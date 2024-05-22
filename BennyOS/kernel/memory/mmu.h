@@ -45,14 +45,14 @@ bool is_valid_canonical(uint64_t addr){
 
 
 // maps 0x1000 (4096 bytes) to RAM
-void map_page(uint64_t paddr, uint64_t vaddr){
+void map_page(uint64_t paddr, uint64_t vaddr, uint64_t ptaddr){
     paddr &= ~(0xFFF);
     vaddr &= ~(0xFFF);
 
     uint64_t *pml4 = (uint64_t*)0x2000;
     uint64_t *pdpt = (uint64_t*)0x100000;
     uint64_t *pd = (uint64_t*)0x101000;
-    uint64_t *pt = (uint64_t*)0x102000;
+    uint64_t *pt = (uint64_t*)ptaddr;
     uint64_t *page = (uint64_t*)paddr;
 
     uint64_t pml4_i = (vaddr >> 39) & 0x1ff;
@@ -62,14 +62,14 @@ void map_page(uint64_t paddr, uint64_t vaddr){
 
     pml4[pml4_i] = (uint64_t)0x100003;
     pdpt[pdpt_i] = (uint64_t)0x101003;
-    pd[pd_i] = (uint64_t)0x102003;
+    pd[pd_i] = (uint64_t)(ptaddr | 3);
     pt[pt_i] = (uint64_t)(paddr | 3);
 }
 
 // maps 0x200000 (2,097,152 bytes) to RAM
-void map_block(uint64_t pstart, uint64_t vstart){
+void map_block(uint64_t pstart, uint64_t vstart, uint64_t ptaddr){
     for(int i = 0; i < 512; i++){
-        map_page(pstart, vstart);
+        map_page(pstart, vstart, ptaddr);
         pstart += 0x1000;
         vstart += 0x1000;
     }

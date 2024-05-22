@@ -87,12 +87,34 @@ void main()
 
     // kmalloc(20);
 
-    // map_page(0x7FFF000, 0xFFFFC90000000000);
+    uint64_t start = 0x100000;
+    uint64_t end = 0xFFFFFFFFFF100000;
+
+    // 512 * pages
+    map_block(0x100000, 0xFFFFFFFFFF100000, 0x102000);
+
+    // 512 * pages
+    // map_block(0x100000, 0xFFFFFFFFFF100000, 0x103000);
 
 
-    // char* test = (char*)0xFFFFC90000000000;
-    // test[0] = 'w';
+    for(uint64_t i = 0xFFFFFFFFFF200000; i < 0xFFFFFFFFFF300000; i++){
+        char* c = (char*) i;
+        c[0] = 'w';
+    }
 
+    kputs("pass");
+
+
+    // test = (char*)0xFFFFFFFFFF2FF000;
+    // for(int i =0; i< 10; i++) test[i] = 's';
+    // kputs(test);
+
+    // test = (char*)0xFFFFFFFFFF300000;
+    // for(int i =0; i< 10; i++) test[i] = 'd';
+    // kputs(test);
+
+    // test = (char*)0xFFFFFFFFFF4FF000;
+    // for(int i =0; i< 10; i++) test[i] = 'f';
     // kputs(test);
 
     // init_physmem();
