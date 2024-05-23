@@ -4,10 +4,7 @@
 #include "memory/pmm.h"
 #include "memory/mmu.h"
 
-
 #define APIC_MASK 1 << 9
-
-// int val = 0;
 
 static int check_apic(void){
     uint32_t unused, edx;
@@ -20,107 +17,41 @@ void interrupt(){
 }
 
 
-
 void main()
 {
     // set_color(WHITE_FGD, BLUE_BGD);
-    set_color(LIGHT_GREEN_FGD, DARK_GRAY_BGD); // 0x2770
-    clear_screen(); // 0x277a
+    set_color(LIGHT_GREEN_FGD, DARK_GRAY_BGD);
+    clear_screen();
 
-
-    if(check_apic()){ // 0x277f
-        kputs("+--------------------------------------+"); // 0x279b
+    if(check_apic()){
+        kputs("+--------------------------------------+");
         kputs("|Hello from the kernel! APIC IS allowed|");
         kputs("+--------------------------------------+\n");
     }else{
         kputs("+--------------------------------------+");
         kputs("Hello from the kernel! APIC NOT allowed");
         kputs("+--------------------------------------+\n");
-    }
+    }  
 
-    // return;
-
-    // for(;;); //0x268f:
-    
-    // for(int i = 0; i < 1; i++){
-    //     uint64_t temp;
-    //     __asm__(
-    //         "mov (%1), %%rax;"
-    //         "mov %%rax, %0;"
-    //         : "=r"(temp)
-    //         : "r"(0xffffffff00000000) 
-    //         : "eax"
-    //     );
-    //     // kprintf("addr: 0x%x; ", 0xc000+i);
-    //     // kprintf("val: 0x%x\n", temp);
-    // }   
-
-
-    
-    // for(;;) {
-    //     asm("hlt");
-    // }
-
+    // init terminal
     kprintf(">:  ", 0);
-
-    
 
     // remap PIC
     pic_disable();
     pic_remapping(0x20);
 
-    // return;
-    
-
     // intialize the IDT
-    // breaks here
     idt_init();
-
-    // return;
 
     // enable keyboard interrupts
     pic_clear_mask(1);
     pic_clear_mask(2);
     idt_set_descriptor(0x21, isr_stub_table[0x21], PRESENT|DPL_0|INT_GATE);
 
-    // map_block(0x300000, 0xFFFFC90000000000);
-
-    // kmalloc(20);
-
-    uint64_t start = 0x100000;
-    uint64_t end = 0xFFFFFFFFFF100000;
-
-    // 512 * pages
-    map_block(0x100000, 0xFFFFFFFFFF100000, 0x102000);
-
-    // 512 * pages
-    // map_block(0x100000, 0xFFFFFFFFFF100000, 0x103000);
-
-
-    for(uint64_t i = 0xFFFFFFFFFF200000; i < 0xFFFFFFFFFF300000; i++){
-        char* c = (char*) i;
-        c[0] = 'w';
-    }
-
-    kputs("pass");
-
-
-    // test = (char*)0xFFFFFFFFFF2FF000;
-    // for(int i =0; i< 10; i++) test[i] = 's';
-    // kputs(test);
-
-    // test = (char*)0xFFFFFFFFFF300000;
-    // for(int i =0; i< 10; i++) test[i] = 'd';
-    // kputs(test);
-
-    // test = (char*)0xFFFFFFFFFF4FF000;
-    // for(int i =0; i< 10; i++) test[i] = 'f';
-    // kputs(test);
-
-    // init_physmem();
-
-
-    // kprintf("%x\n", 0x5);
+    // maps pages for kernel memory from 0xFFFFFFFFF0142000-0xFFFFFFFFF8000000
+    kinit_mem();
+    // frees all of physical memory and inits freelist
+    init_pmm();
     
     for(;;) {
         asm("hlt");

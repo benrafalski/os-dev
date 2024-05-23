@@ -86,7 +86,7 @@ void kputs(const char *str)
     update_cursor(0, y);
 }
 
-void kprintf(const char* str, int arg){
+void kprintf(const char* str, uint64_t arg){
     int len = strlen(str) - 2;
     uint16_t pos = get_cursor_position();
     int x = pos % VGA_WIDTH;
