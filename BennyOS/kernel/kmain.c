@@ -2,7 +2,8 @@
 #include "print/print.h"
 #include "interrupts/init_idt.h"
 #include "memory/pmm.h"
-#include "memory/mmu.h"
+#include "memory/vmm.h"
+#include "memory/malloc.h"
 
 #define APIC_MASK 1 << 9
 
@@ -48,11 +49,19 @@ void main()
     pic_clear_mask(2);
     idt_set_descriptor(0x21, isr_stub_table[0x21], PRESENT|DPL_0|INT_GATE);
 
-    // maps pages for kernel memory from 0xFFFFFFFFF0142000-0xFFFFFFFFF8000000
-    kinit_mem();
+    // maps pages for kernel memory from 
+    //      virtual memory  = 0xFFFFFFFFF0142000-0xFFFFFFFFF8000000
+    //      physical memory = 0x142000 - 0x8000000
+    init_vmm();
     // frees all of physical memory and inits freelist
     init_pmm();
-    
+
+
+    // uint32_t n = 129;
+    // kprintf("%d\n", BIN(n));
+
+    malloc(33);
+
     for(;;) {
         asm("hlt");
     }

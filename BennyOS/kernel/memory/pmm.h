@@ -9,13 +9,6 @@
 #define VIRTMEM_END_USER    0x00007ffff8000000
 #define PAGE_SIZE           0x1000
 
-
-// KERN
-// pml4 = 0x2000
-// pdpt = 0x100000
-// pd = 0x101c00-0x101e00
-// pt = 0x102000-0x142000
-
 typedef struct page{
     struct page* next;
 } page;
