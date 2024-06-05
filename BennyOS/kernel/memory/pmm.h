@@ -37,6 +37,14 @@ uint8_t* palloc(void) {
     page* p;
     p = freelist;
     freelist = p->next;
+
+
+    uint8_t* clear = (uint8_t*)p;
+    for(uint32_t i = 0; i < 4096; i++){
+        *clear = 0;
+        clear ++;
+    }
+
     return (uint8_t*)p;
 }
 
