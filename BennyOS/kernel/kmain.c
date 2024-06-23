@@ -60,8 +60,14 @@ void main()
     // uint32_t n = 129;
     // kprintf("%d\n", BIN(n));
 
-    uint8_t* ptr1 = (uint8_t*)kmalloc(7);
-    uint8_t* ptr2 = (uint8_t*)kmalloc(7);
+    uint8_t* ptr1 = (uint8_t*)kmalloc(10);
+    uint8_t* ptr2 = (uint8_t*)kmalloc(10);
+    uint8_t* ptr3 = (uint8_t*)kmalloc(10);
+    uint8_t* ptr4 = (uint8_t*)kmalloc(10);
+
+    kfree(ptr1);
+
+    uint8_t* ptr5 = (uint8_t*)kmalloc(10);
 
 
     // uint8_t* ptr3 = (uint8_t*)kmalloc(2040);
