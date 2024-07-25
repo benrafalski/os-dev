@@ -60,18 +60,26 @@ void main()
     // uint32_t n = 129;
     // kprintf("%d\n", BIN(n));
 
-    uint8_t* ptr1 = (uint8_t*)kmalloc(10);
-    uint8_t* ptr2 = (uint8_t*)kmalloc(10);
-    uint8_t* ptr3 = (uint8_t*)kmalloc(10);
-    uint8_t* ptr4 = (uint8_t*)kmalloc(10);
+    // uint8_t* ptr1 = (uint8_t*)kmalloc(10);
+    // uint8_t* ptr2 = (uint8_t*)kmalloc(10);
+    // uint8_t* ptr3 = (uint8_t*)kmalloc(10);
+    // uint8_t* ptr4 = (uint8_t*)kmalloc(10);
 
-    kfree(ptr1);
+    // kfree(ptr1);
 
-    uint8_t* ptr5 = (uint8_t*)kmalloc(10);
+    // uint8_t* ptr5 = (uint8_t*)kmalloc(10);
 
 
-    // uint8_t* ptr3 = (uint8_t*)kmalloc(2040);
+    uint8_t* ptr1 = (uint8_t*)kmalloc(2000);
     // uint8_t* ptr4 = (uint8_t*)kmalloc(2040);
+    // kfree(ptr1);
+    // uint8_t* ptr2 = (uint8_t*)kmalloc(2000);
+    // // uint8_t* ptr3 = (uint8_t*)kmalloc(1000);
+    // kfree(ptr2);
+
+    // MALLOC goals
+    // 1. buddy allocator from 8 to 4096
+    // 2. can alloc a certain size and it will break if you write out of bounds
 
     for(;;) {
         asm("hlt");

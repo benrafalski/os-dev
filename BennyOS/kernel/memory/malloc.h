@@ -3,6 +3,13 @@ typedef struct kmfreelist{
 } kmfreelist;
 
 
+typedef struct mblock {
+    uint64_t size;
+    uint64_t reserved;
+    void* mptr;
+} mblock;
+
+
 #define RSHIFT_OR(n, b) (n | (n >> b))
 #define BIN(n) (RSHIFT_OR(RSHIFT_OR(RSHIFT_OR(RSHIFT_OR(RSHIFT_OR(n-1, 1), 2), 4), 8), 16) + 1)         
 #define INIT_FREELIST(size) kmfreelist* freelist ## size = 0; 
@@ -35,16 +42,21 @@ void* kmalloc_work2048(){
         n = freelist2048;
         freelist2048 = n->next;
         
-        uint32_t* n1 = (uint32_t*)n;
+        uint64_t* n1 = (uint64_t*)n;
         *n1 = 2048;
         return (void*)(((uint8_t*)n1) + 16);
     }
 
     // else get a free block from the 4096 list and split it
     else{
-        // kputs("Getting free block from 4096 list");
-        uint32_t* n1 = (uint32_t*)palloc();
+        kputs("Getting free block from 4096 list");
+        // gets ptr to a 4096 size block
+        // n1 will be the block that is returned
+        uint8_t* n1 = (uint8_t*)palloc();
+        // n2 will be added to the 2048 free list
         uint8_t* n2 = (uint8_t*)((uint64_t)n1 + 2048);
+
+
         kmfreelist* n;
         n = (kmfreelist*)n2;
         n->next = freelist2048;
@@ -63,14 +75,14 @@ void* kmalloc_work1024(){
         n = freelist1024;
         freelist1024 = n->next;
         
-        uint32_t* n1 = (uint32_t*)n;
+        uint64_t* n1 = (uint64_t*)n;
         *n1 = 1024;
         return (void*)(((uint8_t*)n1) + 16);
     }
 
     // else get a free block from the 4096 list and split it
     else{
-        // kputs("Getting free block from 2048 list");
+        kputs("Getting free block from 2048 list");
         uint32_t* n1 = (uint32_t*)kmalloc_work2048();
         uint8_t* n2 = (uint8_t*)((uint64_t)n1 + 1024);
         kmfreelist* n;
