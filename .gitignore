@@ -3,6 +3,7 @@
 *os-image
 .vscode
 *logs*
+*.img
 
 # qemu-system-x86_64 -drive format=raw,file="D:\Programs\OS Stuff\os-dev\BennyOS\bin\os-image"
 # qemu-system-x86_64 -drive format=raw,file="C:\Users\brafalsk\OneDrive - Intel Corporation\Documents\repos\os-dev\BennyOS\bin\os-image"
