@@ -11,9 +11,6 @@ mov [BOOT_DRIVE], dl
 mov bp, 0x7e00
 mov sp, bp
 
-; num heads = 14
-; num sectors per track = 63
-
 
 ; jmp $ ; 7c0b
 
@@ -36,16 +33,30 @@ jmp $ ; Hang
 %include "../boot/64bit/gdt.asm"
 ; %include "../boot/64bit/print_utils.asm"
 
+; num heads = 16
+; num sectors per track = 63
+
+; starting LBA = 0x800
+; start kernel = 0x0014a000 -> LBA=2640
+; total sectors = 0x400000
+
+; start kernel = 0x00411000 -> LBA=0x2088
+
 [bits 16]
 load_kernel:
 ; load the kernel at offset 77000
     ; mov ax, 0x5000
     ; mov es, ax
+
+    ; call disk_load
+
     mov bx, KERNEL_OFFSET
     mov dh, 41  ; issue... it wasn't loading the rest of the kernel...
     mov dl, [BOOT_DRIVE]
 
     call disk_load
+
+    
 
     ret
 

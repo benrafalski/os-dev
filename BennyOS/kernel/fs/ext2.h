@@ -17,7 +17,14 @@ Inode: structure on the disk that represents a file, dir, or sym-link; not an ac
 #define BLOCK_SIZE          512
 
 
-extern void ata_lba_read(uint32_t lba_sector, uint16_t num_sectors, char* buff_addr);
+typedef struct {
+    uint16_t cylinder;
+    uint8_t head;
+    uint8_t sector;
+} __attribute__((packed)) chs_t;
+
+
+extern void ata_chs_read(chs_t chs, uint16_t num_sectors, char* buff_addr);
 
 
 typedef struct {

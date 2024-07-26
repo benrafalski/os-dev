@@ -2,10 +2,11 @@ HEADERS = $(wildcard ./print/*.h ./interrupts/*.h ./memory/*.h ./fs*.h)
 
 all: ../bin/os-image
 
+# gcc ./fs/makefs.c -o out
+# 	./out
 ../bin/os-image: ../bin/boot_sector.bin ../bin/kernel.bin
-	gcc ./fs/makefs.c -o out
-	./out
-	cat ../bin/boot_sector.bin ../bin/fs.bin ../bin/kernel.bin > $@
+	cat ../bin/boot_sector.bin ../bin/kernel.bin > $@
+
 # ld -o $@ -Ttext 0xFFFFFFFF80000000 $^ --oformat binary
 ../bin/kernel.bin: ../bin/kernel_entry.o ../bin/kernel.o ../bin/isr.o ../bin/ata.o
 	ld -o $@ -T linker.ld $^ --oformat binary
@@ -29,7 +30,7 @@ clean:
 	rm -fr ../bin/*.bin ../bin/*.o ../bin/os-image
 
 run: 
-	qemu-system-x86_64 -drive format=raw,file="../bin/os-image",index=0,media=disk 
+	qemu-system-x86_64 -drive format=raw,file="../bin/os-image"
 
 debug:
 	qemu-system-x86_64 -drive format=raw,file="../bin/os-image",index=0,media=disk -s -S 

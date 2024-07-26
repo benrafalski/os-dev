@@ -63,10 +63,15 @@ void main()
     // read the superblock from disk
     // located at the second sector
     super_block* sb = (super_block*)kmalloc(1024);
-    ata_lba_read(SUPER_BLOCK_LBA, SUPER_BLOCK_SIZE/BLOCK_SIZE, (char*)sb);
+    chs_t chs = {
+        .cylinder = 0,
+        .head = 0,
+        .sector = 1
+    };
+    ata_chs_read(chs, 1, (char*)sb);
 
-    if(sb->signature != 0xEF53) 
-        panic("Incorrect ext2 signature...");
+    if(sb->signature == 0xEF53) 
+        panic("Correct ext2 signature...");
         
 
 
