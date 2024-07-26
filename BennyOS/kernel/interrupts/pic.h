@@ -8,6 +8,15 @@
 #define ICW1_INIT 0x10 /* Initialization - required! */
 #define ICW4_8086 0x01 /* 8086/88 (MCS-80/85) mode */
 
+
+#define IRQ_KEYBOARD        33
+#define IRQ_COM1            34
+#define IRQ_COM2            35
+#define IRQ_CMOS_RTC        39
+#define IRQ_PS2_MOUSE       44
+#define IRQ_ATA_PRIMARY     46
+#define IRQ_ATA_SECONDARY   47
+
 // End of interrupt command
 //      issued to the PIC chips at the end of the IRQ-based interrupt routine
 void pic_send_eoi(uint8_t irq)

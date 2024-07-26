@@ -133,8 +133,6 @@ BEGIN_LM:
 
 
 
-
-
 ; Data
 BOOT_DRIVE db 0x0
 

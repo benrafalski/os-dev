@@ -9,8 +9,8 @@ disk_load:
     mov ch, 0x00
     ; head 0
     mov dh, 0x00
-    ; start reading after 2nd sector (after the boot sector)
-    mov cl, 0x02
+    ; start reading after 3nd sector (after the boot sector [0] and ext2 superblock [1])
+    mov cl, 0x03
     ; call BIOS disk read
     int 0x13
     ; if carry flag set print error message

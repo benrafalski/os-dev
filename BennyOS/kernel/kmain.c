@@ -4,6 +4,7 @@
 #include "memory/pmm.h"
 #include "memory/vmm.h"
 #include "memory/malloc.h"
+#include "fs/ext2.h"
 
 #define APIC_MASK 1 << 9
 
@@ -47,7 +48,7 @@ void main()
     // enable keyboard interrupts
     pic_clear_mask(1);
     pic_clear_mask(2);
-    idt_set_descriptor(0x21, isr_stub_table[0x21], PRESENT|DPL_0|INT_GATE);
+    idt_set_descriptor(IRQ_KEYBOARD, isr_stub_table[IRQ_KEYBOARD], PRESENT|DPL_0|INT_GATE);
 
     // maps pages for kernel memory from 
     //      virtual memory  = 0xFFFFFFFFF0142000-0xFFFFFFFFF8000000
@@ -55,6 +56,19 @@ void main()
     init_vmm();
     // frees all of physical memory and inits freelist
     init_pmm();
+
+    // Filesystem
+    // using ext2
+
+    // read the superblock from disk
+    // located at the second sector
+    super_block* sb = (super_block*)kmalloc(1024);
+    ata_lba_read(SUPER_BLOCK_LBA, SUPER_BLOCK_SIZE/BLOCK_SIZE, (char*)sb);
+
+    if(sb->signature != 0xEF53) 
+        panic("Incorrect ext2 signature...");
+        
+
 
     for(;;) {
         asm("hlt");

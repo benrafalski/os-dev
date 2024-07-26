@@ -1,4 +1,6 @@
 void panic(const char* msg){
-    kputs(msg);
-    asm("hlt;");
+    print_exception_msg(msg);
+    for(;;) {
+        asm("cli;hlt");
+    }
 }
