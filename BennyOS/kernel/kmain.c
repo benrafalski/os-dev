@@ -62,12 +62,25 @@ void main()
 
     // read the superblock from disk
     // located at LBA 2
-    super_block* sb = (super_block*)kmalloc(1024);
+    super_block_t* sb = (super_block_t*)kmalloc(SUPER_BLOCK_SIZE);
     ata_lba_read(SUPER_BLOCK_LBA, SUPER_BLOCK_SIZE/SECTOR_SIZE, (char*)sb);
 
     if(sb->signature != 0xEF53) 
         panic("Incorrect ext2 signature...");
-        
+
+    if(sb->fs_state != 1)
+        panic("Filesystem has errors...");
+
+
+    // int size = (1024 << sb->block_size);
+
+    bgd_table_t* bgd_table = (bgd_table_t*)kmalloc(BGD_TABLE_SIZE);
+    ata_lba_read(BGD_TABLE_LBA, BGD_TABLE_SIZE/SECTOR_SIZE, (char*)bgd_table);
+
+    // uint64_t block_usage_bitmap_addr = (bgd_table->blk_use_bitmap << 12);
+
+
+    // kprintf("0x%x", );        
 
 
     for(;;) {

@@ -3,7 +3,11 @@ disk_load:
 ; starting head = 0x20
 ; starting sector = 33
 ; starting cylinder = 0
+
+; addr 0x00411000 on disk -> LBA=0x2088 -> CHS=(8,4,13)
     ; BIOS read sector function
+
+    ; kerenel = 0x00084c00 = LBA->1062
     mov ah, 0x02
     ; read dh sectors
     mov al, dh

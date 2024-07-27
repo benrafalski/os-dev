@@ -13,16 +13,15 @@ dd if=/dev/zero of=disk.img bs=1048576 count=128
 # EOF
 
 # losetup -o $[2048*512] --sizelimit $[8*1024*1024] /dev/loop3 disk.img
+# mke2fs -b 1024 disk.img
 mke2fs disk.img
 losetup /dev/loop3 disk.img
 losetup -a
-# mkfs.ext2 /dev/loop3
 file -sL disk.img
 file -sL /dev/loop3
 fdisk -l /dev/loop3
 mkdir mdir
 mount /dev/loop3 mdir
-# mount disk.img mdir
 cp ../bin/kernel.bin mdir/
 umount mdir
 rm -r mdir

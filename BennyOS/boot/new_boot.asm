@@ -85,9 +85,7 @@ load_kernel:
     mov dl, [BOOT_DRIVE]
 
     call disk_load
-
     
-
     ret
 
 [bits 32]
