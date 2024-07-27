@@ -8,7 +8,7 @@ KERNEL_OFFSET equ 0x8000
 mov [BOOT_DRIVE], dl
 
 ; init the stack
-mov bp, 0x7e00
+mov bp, 0x7F00
 mov sp, bp
 
 
@@ -47,6 +47,36 @@ load_kernel:
 ; load the kernel at offset 77000
     ; mov ax, 0x5000
     ; mov es, ax
+
+    ; mov bx, KERNEL_OFFSET
+    ; mov dl, [BOOT_DRIVE]
+
+    ; mov ah, 0x02
+    ; ; read 1 sectors
+    ; mov al, 1
+    ; ; cylinder 0
+    ; mov ch, 0
+    ; ; head 0
+    ; mov dh, 0
+    ; ; start reading after 3nd sector (after the boot sector [0] and ext2 superblock [1])
+    ; mov cl, 3
+    ; ; call BIOS disk read
+    ; int 0x13
+    ; ; if carry flag set print error message
+
+    ; jmp $
+
+    ; ; pop dx
+    ; ; mov bx, dx
+    ; ; call print_hex
+    ; jc disk_error ; 0x7c1e
+
+    ; ; check if dh (num sectors expected) == al (num sectors read)
+    ; pop dx
+    ; cmp dh, al
+
+    ; jne disk_error
+
 
     ; call disk_load
 

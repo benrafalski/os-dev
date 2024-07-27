@@ -12,9 +12,9 @@ Inode: structure on the disk that represents a file, dir, or sym-link; not an ac
 
 */
 
-#define SUPER_BLOCK_LBA     1
+#define SUPER_BLOCK_LBA     2
 #define SUPER_BLOCK_SIZE    512
-#define BLOCK_SIZE          512
+#define SECTOR_SIZE         512
 
 
 typedef struct {
@@ -25,6 +25,7 @@ typedef struct {
 
 
 extern void ata_chs_read(chs_t chs, uint16_t num_sectors, char* buff_addr);
+extern void ata_lba_read(uint32_t lba, uint16_t num_sectors, char* buff_addr);
 
 
 typedef struct {
