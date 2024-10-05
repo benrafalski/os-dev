@@ -22,8 +22,12 @@ file -sL /dev/loop3
 fdisk -l /dev/loop3
 mkdir mdir
 mount /dev/loop3 mdir
+echo hello > test.txt
 cp ../bin/kernel.bin mdir/
+cp test.txt mdir/
+ls -la mdir
 umount mdir
+rm test.txt
 rm -r mdir
 dd if=../bin/boot_sector.bin of=disk.img conv=notrunc bs=446 count=1
 dd if=../bin/boot_sector.bin of=disk.img conv=notrunc bs=1 count=2 skip=510 seek=510

@@ -92,6 +92,8 @@ void kprintf(const char* str, uint64_t arg){
     int x = pos % VGA_WIDTH;
     int y = pos / VGA_WIDTH;
 
+    
+
     while(*str != '\0'){
         if(*str == '%'){
             char *trash;

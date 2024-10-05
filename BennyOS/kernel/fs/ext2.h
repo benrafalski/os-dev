@@ -22,6 +22,8 @@ Inode: structure on the disk that represents a file, dir, or sym-link; not an ac
 #define BGD_TABLE_LBA       8
 #define BGD_TABLE_SIZE      512
 
+#define LBA_4096(n) (n * 8)
+
 
 // EXT2 types
 enum {
@@ -63,7 +65,7 @@ enum {
     HASH_IDX_DIR        = 0x00010000,   // Hash indexed directory
     AFS_DIR             = 0x00020000,   // AFS directory
     JOURNAL_DATA        = 0x00040000    // Journal file data
-}
+};
 
 typedef struct {
     uint16_t cylinder;
@@ -149,7 +151,19 @@ typedef struct {
     uint32_t    ext_attr;                   // In version >= 1, extended attribute block
     uint32_t    size_upper;                 // In version >= 1, upper 32 bits of file size
     uint32_t    frag_addr;                  // block address of fragment
-    uint8_t     os_spec2[12]                // OS specific value 2
+    uint8_t     os_spec2[12];               // OS specific value 2
 } __attribute__((packed)) inode_t;
+
+
+// reads the specified number of lba sectors
+void read_sectors_lba(uint32_t lba, uint16_t num_sectors, char* buff_addr){
+    char* start = buff_addr;
+    uint32_t lba_num = lba;
+    for(uint16_t i = 0; i < num_sectors; i++){
+        ata_lba_read(lba_num, 1, (char*)start);
+        lba_num++;
+        start+=SECTOR_SIZE;
+    }
+}
 
 

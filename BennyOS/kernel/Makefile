@@ -30,10 +30,10 @@ clean:
 	rm -fr ../bin/*.bin ../bin/*.o ../bin/os-image
 
 run: 
-	qemu-system-x86_64 -drive format=raw,file="../bin/os-image"
+	qemu-system-x86_64 -drive format=raw,file="../build/disk.img"
 
 debug:
-	qemu-system-x86_64 -drive format=raw,file="../bin/os-image",index=0,media=disk -s -S 
+	qemu-system-x86_64 -drive format=raw,file="../build/disk.img",index=0,media=disk -s -S 
 
 monitor:
 	qemu-system-x86_64 -drive format=raw,file="../bin/os-image",index=0,media=disk -monitor telnet:127.0.0.1:55555,server,nowait

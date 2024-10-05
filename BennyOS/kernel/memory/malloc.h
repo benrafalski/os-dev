@@ -300,7 +300,7 @@ void kfree(void* ptr){
             break;
         }
         case 4096:{
-            kputs("4096");
+            panic("kfree. invalid size (4096)...");
             break;
         }
         default:{
