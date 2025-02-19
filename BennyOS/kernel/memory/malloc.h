@@ -202,59 +202,72 @@ void* kmalloc(uint32_t size){
 
     uint32_t bin = BIN(size+16);
 
-    
-    switch(bin){
-        case 32:{
-            mblock* block = (mblock*)kmalloc_work32();
-            block->size = 32;
-            return (void*)&block->mptr;
-            break;
+    if(bin <= 4096){
+        switch(bin){
+            case 32:{
+                mblock* block = (mblock*)kmalloc_work32();
+                block->size = 32;
+                return (void*)&block->mptr;
+                break;
+            }
+            case 64:{
+                mblock* block = (mblock*)kmalloc_work64();
+                block->size = 64;
+                return (void*)&block->mptr;
+                break;
+            }
+            case 128:{
+                mblock* block = (mblock*)kmalloc_work128();
+                block->size = 128;
+                return (void*)&block->mptr;
+                break;
+            }
+            case 256:{
+                mblock* block = (mblock*)kmalloc_work256();
+                block->size = 256;
+                return (void*)&block->mptr;
+                break;
+            }
+            case 512:{
+                mblock* block = (mblock*)kmalloc_work512();
+                block->size = 512;
+                return (void*)&block->mptr;
+                break;
+            }
+            case 1024:{
+                mblock* block = (mblock*)kmalloc_work1024();
+                block->size = 1024;
+                return (void*)&block->mptr;
+                break;
+            }
+            case 2048:{
+                mblock* block = (mblock*)kmalloc_work2048();
+                block->size = 2048;
+                return (void*)&block->mptr;
+                break;
+            }
+            case 4096:{
+                return palloc();
+                // panic("in kmalloc: got bin size 4096");
+                break;
+            }
+            default:{
+                kprintf("bin %d\n", bin);
+                panic("kmalloc. invalid bin...");
+                break;
+            }
         }
-        case 64:{
-            mblock* block = (mblock*)kmalloc_work64();
-            block->size = 64;
-            return (void*)&block->mptr;
-            break;
+    }else{
+        void* ptr;
+        while(bin > 0){
+            ptr = palloc();
+            bin -= 4096;
         }
-        case 128:{
-            mblock* block = (mblock*)kmalloc_work128();
-            block->size = 128;
-            return (void*)&block->mptr;
-            break;
-        }
-        case 256:{
-            mblock* block = (mblock*)kmalloc_work256();
-            block->size = 256;
-            return (void*)&block->mptr;
-            break;
-        }
-        case 512:{
-            mblock* block = (mblock*)kmalloc_work512();
-            block->size = 512;
-            return (void*)&block->mptr;
-            break;
-        }
-        case 1024:{
-            mblock* block = (mblock*)kmalloc_work1024();
-            block->size = 1024;
-            return (void*)&block->mptr;
-            break;
-        }
-        case 2048:{
-            mblock* block = (mblock*)kmalloc_work2048();
-            block->size = 2048;
-            return (void*)&block->mptr;
-            break;
-        }
-        case 4096:{
-            kputs("4096");
-            break;
-        }
-        default:{
-            panic("kmalloc. invalid bin...");
-            break;
-        }
+        return ptr;
     }
+
+    
+    
 }
 
 
@@ -300,7 +313,8 @@ void kfree(void* ptr){
             break;
         }
         case 4096:{
-            panic("kfree. invalid size (4096)...");
+            // panic("kfree. invalid size (4096)...");
+            pfree((char*)n);
             break;
         }
         default:{

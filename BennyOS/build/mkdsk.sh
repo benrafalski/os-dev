@@ -22,9 +22,12 @@ file -sL /dev/loop3
 fdisk -l /dev/loop3
 mkdir mdir
 mount /dev/loop3 mdir
-echo hello > test.txt
 cp ../bin/kernel.bin mdir/
-cp test.txt mdir/
+# cp test.txt mdir/
+mkdir mdir/first
+mkdir mdir/first/second
+echo hello > test.txt
+cp test.txt mdir/first/second
 ls -la mdir
 umount mdir
 rm test.txt

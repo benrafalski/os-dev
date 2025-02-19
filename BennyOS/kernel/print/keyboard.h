@@ -39,10 +39,25 @@ char scancode_ascii(const char scan_code)
     }
 }
 
+void command_ls(){
+    kputs("");
+    print_dirlist(cwd);
+}
+
+void command_cd(char* path){
+    kputs("");
+    vfs_cd(path);
+}
+
+void command_cat(char* path){
+    kputs("");
+    char* buff = vfs_read_file(path); 
+    if(buff){
+        kputs(buff);
+    }
+}
+
 char read_key(void){
-
-
-    // for(int i = 10000000; i > 0; i--);
 
     uint16_t pos = get_cursor_position();
     int x = pos % VGA_WIDTH;
@@ -76,10 +91,14 @@ char read_key(void){
                 buffer++;
             } 
             else if(key == ENTER){
+                uint32_t nargs = strsplit(buff, ' ');
 
                 if(strcmp("clear", buff)) clear_screen();
                 // In newer versions of QEMU, you can do shutdown with
                 else if(strcmp("exit", buff)) outw(0x604, 0x2000);
+                else if(strcmp("ls", buff)) command_ls();
+                else if(strcmp("cd", buff)) command_cd(buff + 3);
+                else if(strcmp("cat", buff)) command_cat(buff + 4);
 
                 else {
                     kputs("");

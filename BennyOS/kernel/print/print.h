@@ -1,7 +1,7 @@
+#include <stdint.h>
 #include "colors.h"
 #include "portio.h"
 #include "string.h"
-#include <stdint.h>
 
 #define VIDEO_MEMORY 0xB8000
 #define VGA_HEIGHT 25
@@ -169,4 +169,9 @@ void print_exception_msg(const char *msg)
     set_color(color & 0xf, color & 0xf0);
 }
 
-// void change_color()
+void panic(const char* msg){
+    print_exception_msg(msg);
+    for(;;) {
+        asm("cli;hlt");
+    }
+}

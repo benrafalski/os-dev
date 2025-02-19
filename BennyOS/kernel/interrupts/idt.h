@@ -1,5 +1,4 @@
 #include <stdint.h>
-#include "errors.h"
 
 #define IDT_MAX_DESCRIPTORS 256
 // INT_GATE     -> P=0b1, DPL=0b00, TYPE=0x1110

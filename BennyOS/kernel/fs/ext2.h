@@ -17,10 +17,14 @@ Inode: structure on the disk that represents a file, dir, or sym-link; not an ac
 #define SUPER_BLOCK_LBA     2
 #define SUPER_BLOCK_SIZE    512
 #define SECTOR_SIZE         512
+#define SECTORS_PER_DPTR    4
 
 
 #define BGD_TABLE_LBA       8
 #define BGD_TABLE_SIZE      512
+
+#define INODE_TABLE_SIZE    20
+#define INODE_SIZE          128
 
 #define LBA_4096(n) (n * 8)
 
@@ -35,6 +39,7 @@ enum {
   SYM_LINK              = 0xA000,       // Symbolic Link
   UNIX_SOCK             = 0xC000        // Unix Socket
 };
+
 
 // EXT2 permissions
 enum {
@@ -65,6 +70,19 @@ enum {
     HASH_IDX_DIR        = 0x00010000,   // Hash indexed directory
     AFS_DIR             = 0x00020000,   // AFS directory
     JOURNAL_DATA        = 0x00040000    // Journal file data
+};
+
+// Directory Entry Type Indicators
+enum {
+    D_UNK               = 0,            // Unknown type
+    D_FILE              = 1,            // Regular file
+    D_DIR               = 2,            // Directory
+    D_CHARDEV           = 3,            // Character device
+    D_BLOCKDEV          = 4,            // Block device
+    D_FIFO              = 5,            // FIFO
+    D_SOCKET            = 6,            // Socket
+    D_SYM_LINK          = 7             // Symbolic link (soft link)
+
 };
 
 typedef struct {
@@ -104,6 +122,8 @@ typedef struct {
     uint32_t    ver_major;                  // major portion of version
     uint16_t    reserve_user;               // user ID that can use reserved blocks
     uint16_t    reserve_group;              // group ID that can use reserved blocks
+    uint32_t    first_nonrsvd_inode;        // First non-reserved inode in file system. (In versions < 1.0, this is fixed as 11)
+    uint16_t    inode_size;                 // Size of each inode structure in bytes. (In versions < 1.0, this is fixed as 128)
 
 } __attribute__((packed)) super_block_t;
 
@@ -155,6 +175,129 @@ typedef struct {
 } __attribute__((packed)) inode_t;
 
 
+typedef struct {
+    uint32_t    inode;                      // Inode
+    uint16_t    size;                       // Total size of this entry (Including all subfields)
+    uint8_t     name_lsb;                   // Name Length least-significant 8 bits
+    uint8_t     type;                       // Type indicator (only if the feature bit for "directory entries have file type byte" is set, else this is the most-significant 8 bits of the Name Length)
+    uint8_t*    name;                       // Name characters
+} __attribute__((packed)) dir_entry_t;
+
+
+typedef struct dir_list_node_t{
+    dir_entry_t* entry;
+    struct dir_list_node_t* next;
+    struct dir_list_node_t* children;
+} __attribute__((packed)) dir_list_node_t;
+
+
+super_block_t superblock = {0};
+    // uint32_t    num_inodes;                 // 0x00008000
+    // uint32_t    num_blocks;                 // 0x00008000
+    // uint32_t    num_reserved_blocks;        // 0x00000666
+    // uint32_t    num_unalloc_blocks;         // 0x00007be8
+    // uint32_t    num_unalloc_inodes;         // 0x00007ff4
+    // uint32_t    superblock_blocknum;        // 0x00000000
+    // uint32_t    block_size;                 // 0x00000002 -> 4096 is block size
+    // uint32_t    fragment_size;              // 0x00000002
+    // uint32_t    num_blocks_blockgroup;      // 0x00008000
+    // uint32_t    num_frags_blockgroup;       // 0x00008000
+    // uint32_t    num_inodes_blockgroup;      // 0x00008000
+    // uint32_t    last_mount;                 // 0x66ff2f1f
+    // uint32_t    last_write;                 // 0x66ff2f1f
+    // uint16_t    mounts_since_cc;            // 0x0001
+    // uint16_t    mounts_before_cc;           // 0xffff
+    // uint16_t    signature;                  // 0xef53
+    // uint16_t    fs_state;                   // 0x0001
+    // uint16_t    error;                      // 0x0001
+    // uint16_t    ver_minor;                  // 0x0000
+    // uint32_t    last_cc;                    // 0x66ff2f1
+    // uint32_t    int_force_cc;               // 0x00000000
+    // uint32_t    os_id;                      // 0x00000000
+    // uint32_t    ver_major;                  // 0x00000001
+    // uint16_t    reserve_user;               // 0x00000000
+    // uint16_t    reserve_group;              // 0x0000000b
+bgd_table_t bgd_table = {0};
+    // uint32_t    blk_use_bitmap;             // 0x00000009
+    // uint32_t    inode_use_bitmap;           // 0x0000000a
+    // uint32_t    inode_table;                // 0x0000000b
+    // uint16_t    unalloc_blocks;             // 0x7ff47be8
+    // uint16_t    unalloc_inodes;             // 0x00000002
+    // uint8_t     unused[14];                 // padding
+
+inode_t inode_table[INODE_TABLE_SIZE] = {0};
+    // 0xb300
+    // 0000b500
+    // 0000b580
+
+    // inode[0] at lba 88 -> nothing address is 0x100e0 in memory
+    // inode[1] at lba 88.25 -> root
+        // type 41ed -> DIR, U_RD, G_RD, U_EX, U_WR, G_EX, O_RD, O_EX  
+        // sector count 0x00000008
+        // osspec 0x00000002
+        // dptr0 0x0000040b
+    // inode[2] at lba 89.5 -> no clue
+        // type 0x8180 -> U_WR|U_RD|FILE
+        // sector count = 0x00000040
+        // doubly pointer = 0x00000410
+    // inode[3] at lba 90.5 -> lost+found
+        // type 0x41c0 -> DIR|U_RD|O_RD|G_EX
+        // sector count = 0x20
+        // dptr0 0x0000040c
+        // dptr1 0x0000040d
+        // dptr2 0x0000040e
+        // dptr3 0x0000040f
+    // inode at lba 90.75 -> kernel.bin
+        // type 0x81ed -> FILE|U_WR|U_EX|G_RD|G_EX|O_RD|O_EX
+        // sector count 0x00000038
+        // osspec value 0x00000001
+        // dptr0 0x00000411
+        // dptr1 0x00000412
+        // dptr2 0x00000413
+        // dptr3 0x00000414
+        // dptr4 0x00000415
+        // dptr5 0x00000416
+        // dptr6 0x00000417
+        // generation number = 0x9d93ebb0
+    // inode at lba 91 -> test.txt
+        // type 81ed
+        // sector count is 1
+        // dptr0 0x418
+
+    // start kernel.bin 0040b000
+
+// root
+// entry 1
+// inode = 0x00000002
+// size = 0x000c
+// name lsb = 0x02
+// 
+
+
+// extract the size of each block, 
+// the total number of inodes, 
+// the total number of blocks, 
+// the number of blocks per block group, 
+// and the number of inodes in each block group
+
+void read_superblock(){
+    ata_lba_read(SUPER_BLOCK_LBA, SUPER_BLOCK_SIZE/SECTOR_SIZE, (char*)&superblock);
+    if(superblock.signature != 0xEF53) {
+        panic("Incorrect ext2 signature...");
+    }
+
+    if(superblock.fs_state != 1){
+        panic("Filesystem has errors...");
+    }
+
+    // kprintf("inodesize: %d\n", superblock.inode_size);
+}
+
+void read_bgd_table(){
+    ata_lba_read(BGD_TABLE_LBA, BGD_TABLE_SIZE/SECTOR_SIZE, (char*)&bgd_table);
+}
+
+
 // reads the specified number of lba sectors
 void read_sectors_lba(uint32_t lba, uint16_t num_sectors, char* buff_addr){
     char* start = buff_addr;
@@ -165,5 +308,106 @@ void read_sectors_lba(uint32_t lba, uint16_t num_sectors, char* buff_addr){
         start+=SECTOR_SIZE;
     }
 }
+
+void read_inode_table(){
+    if(bgd_table.inode_table == 0){
+        panic("ext.h (read_inode_table): Cannot read inode_table before bgd_table...");
+    }
+    read_sectors_lba(LBA_4096(bgd_table.inode_table), (INODE_TABLE_SIZE*INODE_SIZE)/SECTOR_SIZE, (char*)&inode_table);
+}
+
+
+uint32_t get_inode_size(inode_t inode){
+    return (inode.size_lower < SECTOR_SIZE ? SECTOR_SIZE : inode.size_lower);
+}
+
+void read_inode(uint32_t inode, inode_t* inode_struct){
+    read_sectors_lba(LBA_4096(inode), INODE_SIZE/SECTOR_SIZE, (char*)inode_struct);
+}
+
+
+void read_file_inode(inode_t inode, char* buff_addr){
+    if(!(inode.type_perms & FILE)){
+        panic("ext.h (read_file_inode): cannot read contents unless type is FILE");
+    }
+
+    uint32_t size = get_inode_size(inode);
+
+    if(inode.dptr0){
+        read_sectors_lba(LBA_4096(inode.dptr0), size/SECTOR_SIZE, (char*)buff_addr);
+    }
+
+}
+
+void read_dir_inode(inode_t inode, char* buff_addr){
+    if(!(inode.type_perms & DIR)){
+        panic("ext.h (read_dir_inode): cannot read contents unless type is DIR");
+    }
+
+    if(inode.dptr0){
+        read_sectors_lba(LBA_4096(inode.dptr0), 2, (char*)buff_addr);
+    }
+
+}
+
+void read_dir_entry(dir_entry_t* dir_entry, char* buff_addr){
+    memcpy(buff_addr, (char*)dir_entry, 8);
+    dir_entry->name = (char*)kmalloc(dir_entry->name_lsb + 1);
+    memcpy(buff_addr + 8, dir_entry->name, dir_entry->name_lsb);
+    dir_entry->name[dir_entry->name_lsb] = 0;
+}
+
+void print_dirlist(dir_list_node_t* dir_list_head){
+    if(!dir_list_head){
+        return;
+    }
+
+    dir_list_node_t* temp = dir_list_head;
+    while(temp->next){
+        kputs(temp->entry->name);
+        temp = temp->next;
+    }
+}
+
+
+// takes inode number of directory location (note inode table starts at index 1)
+dir_list_node_t* read_directory(uint32_t inode_num){
+    uint8_t* dir_contents;
+    if(inode_num < 20){
+        dir_contents = (uint8_t*)kmalloc(inode_table[inode_num - 1].size_lower);
+        read_dir_inode(inode_table[inode_num - 1], dir_contents);
+    }else{
+        inode_t *tmp_inode = (inode_t*)kmalloc(sizeof(inode_t));
+        read_sectors_lba(LBA_4096(inode_num), INODE_SIZE/SECTOR_SIZE, (char*)tmp_inode);
+        dir_contents = (uint8_t*)kmalloc(tmp_inode->size_lower);
+        read_dir_inode(*tmp_inode, dir_contents);
+    }    
+
+    dir_list_node_t* dir_list = (dir_list_node_t*)kmalloc(sizeof(dir_list_node_t*));
+    dir_list_node_t* dir_list_head = dir_list;
+
+    while(((dir_entry_t*)dir_contents)->inode != 0){
+        dir_entry_t* dir_entry = (dir_entry_t*)kmalloc(sizeof(dir_entry_t*));
+        read_dir_entry(dir_entry, dir_contents);
+        dir_contents += dir_entry->size;
+        dir_list->entry = dir_entry;
+        dir_list->next = (dir_list_node_t*)kmalloc(sizeof(dir_list_node_t*));
+        dir_list = dir_list->next;   
+    }
+    
+    // kfree(dir_list);
+    // dir_list = 0; 
+
+    return dir_list_head;
+}
+
+
+
+void ext2_read(){
+
+}
+
+
+
 
 

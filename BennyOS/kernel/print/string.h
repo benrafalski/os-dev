@@ -1,3 +1,5 @@
+
+
 // A utility function to reverse a string
 void reverse(char str[], int length)
 {
@@ -79,6 +81,7 @@ char *strcat(char* dest, const char* src){
     return dest;
 }
 
+// 0 if not equal, 1 if equal
 int strcmp(const char* s1, const char* s2){
     int len1 = strlen(s1);
     int len2 = strlen(s2);
@@ -94,3 +97,68 @@ int strcmp(const char* s1, const char* s2){
 
     return 1;
 }
+
+char* memcpy(char* src, char* dest, uint32_t length){
+    char* _src = src;
+    char* _dest = dest;
+
+    for(uint32_t i = 0; i < length;i++){
+        *_dest = *_src;
+        _src++;
+        _dest++;
+    }
+
+    dest;
+}
+
+void memset(char* src, char new, uint32_t length){
+    char* _src = src;
+    for(uint32_t i = 0; i < length;i++){
+        *_src = new;
+        _src++;
+    }
+}
+
+char* strncpy (char *s1, const char *s2, int n) {
+  int size = strlen(s2);
+  if(size != n){
+    memset(s1 + size, '\0', n - size);
+  }
+    
+  return memcpy(s1, (char*)s2, size);
+}
+
+uint32_t strsplit(char* str, const char c){
+    uint32_t i = 0, n = 0;
+    while(str[i]){
+        if(str[i] == c){
+            n++;
+            str[i] = '\0';
+        }
+        i++;
+    }
+    return n;
+}
+
+
+uint32_t strends_with(char* str, const char c){
+    char* _name = str;
+    while(*_name){
+        _name++;
+    }
+    _name--;
+    if(*_name == c){
+        return 1;
+    }
+    return 0;
+}
+
+
+uint32_t strstarts_with(char* str, const char c){
+    if(*str == c){
+        return 1;
+    }
+    return 0;
+}
+
+
