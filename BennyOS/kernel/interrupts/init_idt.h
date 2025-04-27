@@ -33,7 +33,7 @@ void idt_init()
     
     for (uint8_t vector = 0; vector < 32; vector++)
     {
-        idt_set_descriptor(vector, isr_stub_table[vector], PRESENT|DPL_0|INT_GATE);
+        idt_set_descriptor(vector, KERNEL_REMAP(isr_stub_table[vector]), PRESENT|DPL_0|INT_GATE);
         vectors[vector] = true;
     }
 

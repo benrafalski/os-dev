@@ -14,48 +14,74 @@ void reverse(char str[], int length)
         start++;
     }
 }
-char *citoa(long long int num, char *str, int base)
-{
-    int i = 0;
-    int isNegative = 0;
+char* citoa(uint64_t value, char* buffer, int base) {
+    const char* digits = "0123456789abcdef";
+    char* ptr = buffer;
+    char* head = buffer;
 
-    /* Handle 0 explicitly, otherwise empty string is
-     * printed for 0 */
-    if (num == 0)
-    {
-        str[i++] = '0';
-        str[i] = '\0';
-        return str;
+    if (value == 0) {
+        *ptr++ = '0';
+        *ptr = '\0';
+        return buffer;
     }
 
-    // In standard itoa(), negative numbers are handled
-    // only with base 10. Otherwise numbers are
-    // considered unsigned.
-    if (num < 0 && base == 10)
-    {
-        isNegative = 1;
-        num = -num;
+    while (value > 0) {
+        *ptr++ = digits[value % base];
+        value /= base;
+    }
+    *ptr = '\0';
+
+    // Reverse the string in-place
+    for (--ptr; head < ptr; head++, ptr--) {
+        char tmp = *head;
+        *head = *ptr;
+        *ptr = tmp;
     }
 
-    // Process individual digits
-    while (num != 0)
-    {
-        int rem = num % base;
-        str[i++] = (rem > 9) ? (rem - 10) + 'a' : rem + '0';
-        num = num / base;
-    }
-
-    // If number is negative, append '-'
-    if (isNegative)
-        str[i++] = '-';
-
-    str[i] = '\0'; // Append string terminator
-
-    // Reverse the string
-    reverse(str, i);
-
-    return str;
+    return buffer;
 }
+// char *citoa(long long int num, char *str, int base)
+// {
+//     int i = 0;
+//     int isNegative = 0;
+
+//     /* Handle 0 explicitly, otherwise empty string is
+//      * printed for 0 */
+//     if (num == 0)
+//     {
+//         str[i++] = '0';
+//         str[i] = '\0';
+//         return str;
+//     }
+
+//     // In standard itoa(), negative numbers are handled
+//     // only with base 10. Otherwise numbers are
+//     // considered unsigned.
+//     if (num < 0 && base == 10)
+//     {
+//         isNegative = 1;
+//         num = -num;
+//     }
+
+//     // Process individual digits
+//     while (num != 0)
+//     {
+//         int rem = num % base;
+//         str[i++] = (rem > 9) ? (rem - 10) + 'a' : rem + '0';
+//         num = num / base;
+//     }
+
+//     // If number is negative, append '-'
+//     if (isNegative)
+//         str[i++] = '-';
+
+//     str[i] = '\0'; // Append string terminator
+
+//     // Reverse the string
+//     reverse(str, i);
+
+//     return str;
+// }
 
 int strlen(const char* str) {
     int len = 0;

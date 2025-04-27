@@ -58,6 +58,7 @@ void command_cat(char* path){
 }
 
 char read_key(void){
+    while(1);
 
     uint16_t pos = get_cursor_position();
     int x = pos % VGA_WIDTH;
@@ -109,7 +110,7 @@ char read_key(void){
 reset:                
                 for(int i = 0; i < buffer; i++) buff[i] = 0;
                 buffer = 0;
-                kprintf(">:  ", 0);
+                kprintf(">: ", 0);
             } else if (key != BACKSPACE){
                 buff[buffer] = key;
                 print_char(key, x, y);

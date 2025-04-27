@@ -37,3 +37,5 @@ debug:
 
 monitor:
 	qemu-system-x86_64 -drive format=raw,file="../bin/os-image",index=0,media=disk -monitor telnet:127.0.0.1:55555,server,nowait
+
+# make clean && make && cd ../build/; sudo ./mkdsk.sh && cd ../kernel; make run

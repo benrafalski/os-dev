@@ -1,7 +1,11 @@
+#include <stddef.h>
 #include "cpuid.h"
+
+#include "debug/regs.h"
 #include "print/print.h"
 #include "memory/pmm.h"
 #include "memory/vmm.h"
+#include "memory/mmu.h"
 #include "memory/malloc.h"
 #include "fs/vfs.h"
 #include "interrupts/init_idt.h"
@@ -17,6 +21,7 @@ static int check_apic(void){
 void interrupt(){
     __asm__ __volatile__("int3;");
 }
+
 
 
 void main()
@@ -35,8 +40,17 @@ void main()
         kputs("+--------------------------------------+\n");
     }  
 
-    // init terminal
-    kprintf(">:  ", 0);
+    // init memory and jump to higher half kernel
+    memory_init();
+    uintptr_t rip;
+    GET_RIP(rip);
+
+    if (rip >= KERNEL_VIRT_BASE) {
+        kprintf("Kernel entry point: %p\n", rip);
+    } else {
+        asm volatile("jmp *%0" :: "r"(KERNEL_REMAP(rip)));
+    }
+
 
     // remap PIC
     pic_disable();
@@ -48,21 +62,16 @@ void main()
     // enable keyboard interrupts
     pic_clear_mask(1);
     pic_clear_mask(2);
-    idt_set_descriptor(IRQ_KEYBOARD, isr_stub_table[IRQ_KEYBOARD], PRESENT|DPL_0|INT_GATE);
+    idt_set_descriptor(IRQ_KEYBOARD, KERNEL_REMAP(isr_stub_table[IRQ_KEYBOARD]), PRESENT|DPL_0|INT_GATE);    
 
-    // maps pages for kernel memory from 
-    //      virtual memory  = 0xFFFFFFFFF0142000-0xFFFFFFFFF8000000
-    //      physical memory = 0x142000 - 0x8000000
-    init_vmm();
-    // frees all of physical memory and inits freelist
-    init_pmm();
-
-    // init virtual filesystem, sets PWD to root
-    init_vfs();
-
-    // char* buff = vfs_read_file("/first/second/test.txt");
-    // kputs(buff);
-
+    kprintf(">: ", 0);
+    // set stack to higher half too 
+    asm volatile (
+        "mov %[stack_top], %%rsp\n" // Set RSP
+        :
+        : [stack_top] "r" ((uintptr_t)KERNEL_STACK_TOP)
+        : "rsp"  // We only need to tell the compiler we're modifying RSP
+    );
     for(;;) {
         asm("hlt");
     }

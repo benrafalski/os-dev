@@ -14,7 +14,9 @@ typedef struct page{
 } page;
 
 
-page* freelist = 0;
+// page* freelist = 0;
+
+static page* freelist = 0;
 
 // free a page
 void pfree(uint8_t* v){
@@ -25,9 +27,59 @@ void pfree(uint8_t* v){
 }
 
 // init the freelist
-void init_pmm(void){
-    for(uint8_t* p = (char*)PHYSMEM_START; p < (uint8_t*)(PHYSMEM_END); p += PAGE_SIZE){
-        pfree(0xFFFFFFFFF0000000 + p);
+// void init_pmm(void){
+//     for(uint8_t* p = (char*)PHYSMEM_START; p < (uint8_t*)(PHYSMEM_END); p += PAGE_SIZE){
+//         pfree(0xFFFFFFFFF0000000 + p);
+//     }
+
+// }
+
+size_t round_up_to_page(size_t size) {
+    return (size + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
+}
+
+void* palloc_npages(size_t npages) {
+    size_t needed = npages;
+    page* prev = 0;
+    page* curr = freelist;
+
+    while (curr) {
+        page* start = curr;
+        page* check = curr;
+        size_t count = 1;
+
+        // Check for contiguous physical memory
+        while (check->next && 
+               (uintptr_t)check->next == (uintptr_t)check + PAGE_SIZE &&
+               count < npages) {
+            check = check->next;
+            count++;
+        }
+
+        if (count == npages) {
+            // Found a block — cut it from the freelist
+            if (prev) {
+                prev->next = check->next;
+            } else {
+                freelist = check->next;
+            }
+
+            return start;  // convert to virtual
+        }
+
+        prev = curr;
+        curr = curr->next;
+    }
+
+    return 0;  // No large enough block found
+}
+
+
+void init_pmm(void) {
+    for (uintptr_t addr = VIRTMEM_START_KERN; addr + PAGE_SIZE <= VIRTMEM_END_KERN; addr += PAGE_SIZE) {
+        page* new_page = (page*)addr;
+        new_page->next = freelist;
+        freelist = new_page;
     }
 }
 

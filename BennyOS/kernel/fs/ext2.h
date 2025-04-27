@@ -371,7 +371,9 @@ void print_dirlist(dir_list_node_t* dir_list_head){
 
 
 // takes inode number of directory location (note inode table starts at index 1)
-dir_list_node_t* read_directory(uint32_t inode_num){
+dir_list_node_t* read_directory(uint32_t inode_num){ // 0x951e
+
+    // while(1);
     uint8_t* dir_contents;
     if(inode_num < 20){
         dir_contents = (uint8_t*)kmalloc(inode_table[inode_num - 1].size_lower);
@@ -386,14 +388,18 @@ dir_list_node_t* read_directory(uint32_t inode_num){
     dir_list_node_t* dir_list = (dir_list_node_t*)kmalloc(sizeof(dir_list_node_t*));
     dir_list_node_t* dir_list_head = dir_list;
 
-    while(((dir_entry_t*)dir_contents)->inode != 0){
-        dir_entry_t* dir_entry = (dir_entry_t*)kmalloc(sizeof(dir_entry_t*));
+    while(((dir_entry_t*)dir_contents)->inode != 0){ // 0x96b9
+        // while(1);
+        dir_entry_t* dir_entry = (dir_entry_t*)kmalloc(sizeof(dir_entry_t*)); // 0x95fa:      call   0x91db
         read_dir_entry(dir_entry, dir_contents);
         dir_contents += dir_entry->size;
         dir_list->entry = dir_entry;
-        dir_list->next = (dir_list_node_t*)kmalloc(sizeof(dir_list_node_t*));
+        dir_list->next = (dir_list_node_t*)kmalloc(sizeof(dir_list_node_t*)); // call   0x91db
         dir_list = dir_list->next;   
+        
     }
+
+
     
     // kfree(dir_list);
     // dir_list = 0; 

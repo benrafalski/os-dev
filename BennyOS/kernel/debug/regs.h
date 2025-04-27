@@ -1,0 +1,1 @@
+#define GET_RIP(var) asm volatile("lea (%%rip), %0" : "=r"(var))

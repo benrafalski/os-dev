@@ -86,64 +86,63 @@ void kputs(const char *str)
     update_cursor(0, y);
 }
 
-void kprintf(const char* str, uint64_t arg){
-    int len = strlen(str) - 2;
+void kprintf(const char* fmt, uint64_t arg) {
     uint16_t pos = get_cursor_position();
     int x = pos % VGA_WIDTH;
     int y = pos / VGA_WIDTH;
 
-    
+    char buf[32];  // buffer for number conversion
+    const char* str = fmt;
 
-    while(*str != '\0'){
-        if(*str == '%'){
-            char *trash;
-            char *num;
+    while (*str != '\0') {
+        if (*str == '%') {
+            str++;  // skip '%'
+
+            if (*str == 'd') {
+                citoa(arg, buf, 10);
+                for (char* p = buf; *p; p++) {
+                    print_char(*p, x++, y);
+                }
+            } else if (*str == 'x') {
+                citoa(arg, buf, 16);
+                for (char* p = buf; *p; p++) {
+                    print_char(*p, x++, y);
+                }
+            } else if (*str == 'c') {
+                print_char((char)arg, x++, y);
+            } else if (*str == 'p') {
+                citoa(arg, buf, 16);
             
-            str++;
-            if(*str == 'd'){
-                // print int
-                num = citoa(arg, trash, 10);
-                while(*num != '\0'){
-                    print_char(*num, x, y);
-                    x++;
-                    num++;
+                print_char('0', x++, y);
+                print_char('x', x++, y);
+            
+                for (char* p = buf; *p; p++) {
+                    print_char(*p, x++, y);
                 }
-                
             }
-            else if(*str == 'x'){
-                // print hex
-                num = citoa(arg, trash, 16);
-                // len += strlen(num);
-                while(*num != '\0'){
-                    print_char(*num, x, y);
-                    x++;
-                    num++;
-                }
-                
+            else {
+                // Unknown format specifier, print as-is
+                print_char('%', x++, y);
+                print_char(*str, x++, y);
             }
-            else if(*str == 'c'){
-                print_char((char)arg, x, y);
-                x++;
-            }
-        
-            str++;
-        }
 
-        if(*str == '\n'){
-            y++;
-            str++;
-            if(*str == 0) x = 1;
-            else x = 0;
+            str++;  // move past format char
             continue;
         }
 
-        print_char(*str, x, y);
-        x++;
-        str++;
-    }  
+        if (*str == '\n') {
+            x = 0;
+            y++;
+            str++;
+            continue;
+        }
 
-    update_cursor(x-1, y);
+        print_char(*str++, x++, y);
+    }
+
+    update_cursor(x, y);
 }
+
 
 void clear_screen()
 {
