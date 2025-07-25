@@ -27,7 +27,9 @@ void interrupt(){
 void main()
 {
     // set_color(WHITE_FGD, BLUE_BGD);
-    set_color(LIGHT_GREEN_FGD, DARK_GRAY_BGD);
+    // set_color(BLUE_FGD, WHITE_BGD);
+    // set_color(LIGHT_GREEN_FGD, DARK_GRAY_BGD);
+    set_color(LIGHT_GREEN_FGD, BLACK_BGD);
     clear_screen();
 
     if(check_apic()){
@@ -51,7 +53,6 @@ void main()
         asm volatile("jmp *%0" :: "r"(KERNEL_REMAP(rip)));
     }
 
-
     // remap PIC
     pic_disable();
     pic_remapping(0x20);
@@ -64,14 +65,16 @@ void main()
     pic_clear_mask(2);
     idt_set_descriptor(IRQ_KEYBOARD, KERNEL_REMAP(isr_stub_table[IRQ_KEYBOARD]), PRESENT|DPL_0|INT_GATE);    
 
+
+    init_vfs();
     kprintf(">: ", 0);
-    // set stack to higher half too 
-    asm volatile (
-        "mov %[stack_top], %%rsp\n" // Set RSP
-        :
-        : [stack_top] "r" ((uintptr_t)KERNEL_STACK_TOP)
-        : "rsp"  // We only need to tell the compiler we're modifying RSP
-    );
+    // // set stack to higher half too 
+    // asm volatile (
+    //     "mov %[stack_top], %%rsp\n" // Set RSP
+    //     :
+    //     : [stack_top] "r" ((uintptr_t)KERNEL_STACK_TOP)
+    //     : "rsp"  // We only need to tell the compiler we're modifying RSP
+    // );
     for(;;) {
         asm("hlt");
     }

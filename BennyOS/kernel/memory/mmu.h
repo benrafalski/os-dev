@@ -239,10 +239,10 @@ void* buddy_alloc(size_t order) {
                 buddy_block_t* buddy1 = (buddy_block_t*)addr;
                 buddy_block_t* buddy2 = (buddy_block_t*)(addr + (PAGE_SIZE << current_order));
 
-                buddy1->next = NULL;
-                buddy2->next = free_list[current_order];
+                // Fix: Properly link both buddies to the free list
+                buddy1->next = free_list[current_order];
+                buddy2->next = buddy1;
                 free_list[current_order] = buddy2;
-                free_list[current_order] = buddy1;
             }
 
             buddy_block_t* result = free_list[order];
@@ -352,6 +352,6 @@ void memory_init() {
     vmm_identity_map_range(pml4_ptr, 0x00142000, 0x08000000, PAGE_WRITE);
     buddy_init();
     map_kernel_higher_half();
-    setup_higher_half_stack();
+    // setup_higher_half_stack();
 }
 

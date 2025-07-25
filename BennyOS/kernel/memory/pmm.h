@@ -85,6 +85,7 @@ void init_pmm(void) {
 
 // used to allocate a page
 uint8_t* palloc(void) {
+    // kprintf("Kernel entry point: %p\n", freelist);
     if(!freelist) panic("palloc. out of memory...");
     page* p;
     p = freelist;

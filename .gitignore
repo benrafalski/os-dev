@@ -15,3 +15,4 @@
 # nasm boot_sector.asm -f bin -o boot_sector.bin
 
 # 
+.gdb_history

@@ -289,8 +289,6 @@ void read_superblock(){
     if(superblock.fs_state != 1){
         panic("Filesystem has errors...");
     }
-
-    // kprintf("inodesize: %d\n", superblock.inode_size);
 }
 
 void read_bgd_table(){
@@ -390,12 +388,16 @@ dir_list_node_t* read_directory(uint32_t inode_num){ // 0x951e
 
     while(((dir_entry_t*)dir_contents)->inode != 0){ // 0x96b9
         // while(1);
+        
         dir_entry_t* dir_entry = (dir_entry_t*)kmalloc(sizeof(dir_entry_t*)); // 0x95fa:      call   0x91db
+        
         read_dir_entry(dir_entry, dir_contents);
+        
         dir_contents += dir_entry->size;
         dir_list->entry = dir_entry;
         dir_list->next = (dir_list_node_t*)kmalloc(sizeof(dir_list_node_t*)); // call   0x91db
         dir_list = dir_list->next;   
+        
         
     }
 

@@ -134,7 +134,7 @@ char* memcpy(char* src, char* dest, uint32_t length){
         _dest++;
     }
 
-    dest;
+    return dest;
 }
 
 void memset(char* src, char new, uint32_t length){

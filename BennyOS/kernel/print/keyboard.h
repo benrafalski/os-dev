@@ -58,8 +58,6 @@ void command_cat(char* path){
 }
 
 char read_key(void){
-    while(1);
-
     uint16_t pos = get_cursor_position();
     int x = pos % VGA_WIDTH;
     int y = pos / VGA_WIDTH;

@@ -118,6 +118,7 @@ char* vfs_read_file(char* name){
 
 
 dir_list_node_t* mount_dir(uint32_t inode){
+    
     dir_list_node_t* dir = read_directory(inode);
     if(!dir){
         return 0;
