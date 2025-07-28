@@ -109,19 +109,16 @@ char *strcat(char* dest, const char* src){
 
 // 0 if not equal, 1 if equal
 int strcmp(const char* s1, const char* s2){
-    int len1 = strlen(s1);
-    int len2 = strlen(s2);
-    if(len1 != len2) return 0;
-    
     while(*s1 != '\0' && *s2 != '\0'){
         if(*s1 != *s2){
-            return 0;
+            return (*s1 - *s2);  // Return difference for unequal
         }
         s1++;
         s2++;
     }
-
-    return 1;
+    
+    // Handle case where strings are different lengths
+    return (*s1 - *s2);
 }
 
 char* memcpy(char* src, char* dest, uint32_t length){
@@ -152,6 +149,17 @@ char* strncpy (char *s1, const char *s2, int n) {
   }
     
   return memcpy(s1, (char*)s2, size);
+}
+
+char* strcpy(char* dest, const char* src) {
+    char* original_dest = dest;
+    while (*src != '\0') {
+        *dest = *src;
+        dest++;
+        src++;
+    }
+    *dest = '\0'; // Null terminate the destination string
+    return original_dest;
 }
 
 uint32_t strsplit(char* str, const char c){

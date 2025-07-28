@@ -40,21 +40,21 @@ char scancode_ascii(const char scan_code)
 }
 
 void command_ls(){
-    kputs("");
-    print_dirlist(cwd);
+    // kputs("");
+    // print_dirlist(cwd);
 }
 
 void command_cd(char* path){
-    kputs("");
-    vfs_cd(path);
+    // kputs("");
+    // vfs_cd(path);
 }
 
 void command_cat(char* path){
-    kputs("");
-    char* buff = vfs_read_file(path); 
-    if(buff){
-        kputs(buff);
-    }
+    // kputs("");
+    // char* buff = vfs_read_file(path); 
+    // if(buff){
+    //     kputs(buff);
+    // }
 }
 
 char read_key(void){

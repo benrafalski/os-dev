@@ -367,7 +367,6 @@ void print_dirlist(dir_list_node_t* dir_list_head){
     }
 }
 
-
 // takes inode number of directory location (note inode table starts at index 1)
 dir_list_node_t* read_directory(uint32_t inode_num){ // 0x951e
 

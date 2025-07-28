@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdarg.h>
 #include "colors.h"
 #include "portio.h"
 #include "string.h"
@@ -86,7 +87,67 @@ void kputs(const char *str)
     update_cursor(0, y);
 }
 
-void kprintf(const char* fmt, uint64_t arg) {
+// void kprintf(const char* fmt, uint64_t arg) {
+//     uint16_t pos = get_cursor_position();
+//     int x = pos % VGA_WIDTH;
+//     int y = pos / VGA_WIDTH;
+
+//     char buf[32];  // buffer for number conversion
+//     const char* str = fmt;
+
+//     while (*str != '\0') {
+//         if (*str == '%') {
+//             str++;  // skip '%'
+
+//             if (*str == 'd') {
+//                 citoa(arg, buf, 10);
+//                 for (char* p = buf; *p; p++) {
+//                     print_char(*p, x++, y);
+//                 }
+//             } else if (*str == 'x') {
+//                 citoa(arg, buf, 16);
+//                 for (char* p = buf; *p; p++) {
+//                     print_char(*p, x++, y);
+//                 }
+//             } else if (*str == 'c') {
+//                 print_char((char)arg, x++, y);
+//             } else if (*str == 'p') {
+//                 citoa(arg, buf, 16);
+            
+//                 print_char('0', x++, y);
+//                 print_char('x', x++, y);
+            
+//                 for (char* p = buf; *p; p++) {
+//                     print_char(*p, x++, y);
+//                 }
+//             }
+//             else {
+//                 // Unknown format specifier, print as-is
+//                 print_char('%', x++, y);
+//                 print_char(*str, x++, y);
+//             }
+
+//             str++;  // move past format char
+//             continue;
+//         }
+
+//         if (*str == '\n') {
+//             x = 0;
+//             y++;
+//             str++;
+//             continue;
+//         }
+
+//         print_char(*str++, x++, y);
+//     }
+
+//     update_cursor(x, y);
+// }
+
+void kprintf(const char* fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    
     uint16_t pos = get_cursor_position();
     int x = pos % VGA_WIDTH;
     int y = pos / VGA_WIDTH;
@@ -99,18 +160,27 @@ void kprintf(const char* fmt, uint64_t arg) {
             str++;  // skip '%'
 
             if (*str == 'd') {
+                uint64_t arg = va_arg(args, uint64_t);
                 citoa(arg, buf, 10);
                 for (char* p = buf; *p; p++) {
                     print_char(*p, x++, y);
                 }
             } else if (*str == 'x') {
+                uint64_t arg = va_arg(args, uint64_t);
                 citoa(arg, buf, 16);
                 for (char* p = buf; *p; p++) {
                     print_char(*p, x++, y);
                 }
             } else if (*str == 'c') {
-                print_char((char)arg, x++, y);
+                char arg = (char)va_arg(args, int);  // char is promoted to int
+                print_char(arg, x++, y);
+            } else if (*str == 's') {
+                char* arg = va_arg(args, char*);
+                while (*arg) {
+                    print_char(*arg++, x++, y);
+                }
             } else if (*str == 'p') {
+                uint64_t arg = va_arg(args, uint64_t);
                 citoa(arg, buf, 16);
             
                 print_char('0', x++, y);
@@ -119,8 +189,7 @@ void kprintf(const char* fmt, uint64_t arg) {
                 for (char* p = buf; *p; p++) {
                     print_char(*p, x++, y);
                 }
-            }
-            else {
+            } else {
                 // Unknown format specifier, print as-is
                 print_char('%', x++, y);
                 print_char(*str, x++, y);
@@ -140,6 +209,7 @@ void kprintf(const char* fmt, uint64_t arg) {
         print_char(*str++, x++, y);
     }
 
+    va_end(args);
     update_cursor(x, y);
 }
 
