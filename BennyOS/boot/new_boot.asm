@@ -81,7 +81,7 @@ load_kernel:
     ; call disk_load
 
     mov bx, KERNEL_OFFSET
-    mov dh, 60 ; issue... it wasn't loading the rest of the kernel...
+    mov dh, 70 ; issue... it wasn't loading the rest of the kernel...
     mov dl, [BOOT_DRIVE]
 
     call disk_load

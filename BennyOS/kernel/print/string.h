@@ -195,4 +195,48 @@ uint32_t strstarts_with(char* str, const char c){
     return 0;
 }
 
+// Helper function to find character in string
+char* strchr(const char* str, int c) {
+    while (*str) {
+        if (*str == c) {
+            return (char*)str;
+        }
+        str++;
+    }
+    return (*str == c) ? (char*)str : NULL;
+}
+
+char* strtok(char* str, const char* delim) {
+    static char* last = NULL;
+    
+    if (str) {
+        last = str;
+    } else if (!last) {
+        return NULL;
+    }
+    
+    // Skip leading delimiters
+    while (*last && strchr(delim, *last)) {
+        last++;
+    }
+    
+    if (!*last) {
+        return NULL;
+    }
+    
+    char* start = last;
+    
+    // Find next delimiter
+    while (*last && !strchr(delim, *last)) {
+        last++;
+    }
+    
+    if (*last) {
+        *last++ = '\0';
+    }
+    
+    return start;
+}
+
+
 

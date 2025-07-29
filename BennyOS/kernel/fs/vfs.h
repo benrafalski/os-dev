@@ -19,6 +19,29 @@ typedef struct mounted_fs {
     struct fs_operations* ops;
 } mounted_fs_t;
 
+// File descriptor structure
+typedef struct vfs_file {
+    vfs_node_t* node;           // Pointer to the VFS node
+    uint32_t position;          // Current file position
+    uint32_t flags;             // Open flags
+    uint32_t mode;              // File mode
+    uint8_t* buffer;            // File content buffer (for caching)
+    uint32_t buffer_size;       // Size of loaded buffer
+    uint8_t is_open;            // File open status
+} vfs_file_t;
+
+// File open flags
+#define VFS_O_RDONLY    0x00    // Read only
+#define VFS_O_WRONLY    0x01    // Write only
+#define VFS_O_RDWR      0x02    // Read/Write
+#define VFS_O_CREAT     0x04    // Create if doesn't exist
+#define VFS_O_TRUNC     0x08    // Truncate to zero length
+#define VFS_O_APPEND    0x10    // Append mode
+
+// Maximum open files
+#define MAX_OPEN_FILES 32
+vfs_file_t open_files[MAX_OPEN_FILES];
+
 #define MAX_MOUNTED_FS 10
 mounted_fs_t mounted_filesystems[MAX_MOUNTED_FS];
 int num_mounted_fs = 0;
@@ -234,10 +257,170 @@ vfs_node_t* vfs_find_child(vfs_node_t* parent, const char* name) {
     return NULL;
 }
 
+// Initialize file descriptor table
+void vfs_init_file_table() {
+    for (int i = 0; i < MAX_OPEN_FILES; i++) {
+        open_files[i].node = NULL;
+        open_files[i].position = 0;
+        open_files[i].flags = 0;
+        open_files[i].mode = 0;
+        open_files[i].buffer = NULL;
+        open_files[i].buffer_size = 0;
+        open_files[i].is_open = 0;
+    }
+}
+
+// Find an available file descriptor
+int vfs_alloc_fd() {
+    for (int i = 0; i < MAX_OPEN_FILES; i++) {
+        if (!open_files[i].is_open) {
+            return i;
+        }
+    }
+    return -1; // No available file descriptors
+}
+
+// Helper function to resolve a full path to a VFS node
+vfs_node_t* vfs_resolve_path(const char* path) {
+    if (!path || !vfs_root) {
+        return NULL;
+    }
+    
+    // Handle root path
+    if (strcmp(path, "/") == 0) {
+        return vfs_root;
+    }
+    
+    // Make a copy of the path for tokenization
+    char* path_copy = (char*)kmalloc(strlen(path) + 1);
+    strcpy(path_copy, path);
+    
+    vfs_node_t* current = vfs_root;
+    char* token = strtok(path_copy, "/");
+    
+    while (token && current) {
+        // Load children if it's a directory
+        if (current->type == D_DIR) {
+            vfs_load_children(current);
+        }
+        
+        // Find the next component
+        vfs_node_t* child = current->children;
+        vfs_node_t* found = NULL;
+        
+        while (child) {
+            if (strcmp(child->name, token) == 0) {
+                found = child;
+                break;
+            }
+            child = child->next;
+        }
+        
+        if (!found) {
+            kfree(path_copy);
+            return NULL; // Path component not found
+        }
+        
+        current = found;
+        token = strtok(NULL, "/");
+    }
+    
+    kfree(path_copy);
+    return current;
+}
+
+// Helper function to load file content from ext2
+int vfs_load_file_content(vfs_node_t* file_node, uint8_t** buffer, uint32_t* size) {
+    if (!file_node || file_node->type != D_FILE) {
+        return -1;
+    }
+
+    
+    // Get inode information
+    inode_t file_inode;
+    if (file_node->inode < 20) {
+        file_inode = inode_table[file_node->inode - 1];
+    } else {
+        read_inode(file_node->inode, &file_inode);
+    }
+    
+    *size = file_inode.size_lower;
+    *buffer = (uint8_t*)kmalloc(*size);
+    
+    if (!*buffer) {
+        kputs("vfs_load_file_content: Failed to allocate buffer");
+        return -1;
+    }
+    
+    // Read file content using ext2 function
+    read_file_inode(file_inode, (char*)*buffer);
+    
+    return 0;
+}
+
+// VFS open function
+int vfs_open(const char* path, uint32_t flags, uint32_t mode) {
+    if (!path) {
+        kputs("vfs_open: Invalid path");
+        return -1;
+    }
+    
+    // Find available file descriptor
+    int fd = vfs_alloc_fd();
+    if (fd == -1) {
+        kputs("vfs_open: No available file descriptors");
+        return -1;
+    }
+    
+    // Parse the path to find the file
+    vfs_node_t* file_node = vfs_resolve_path(path);
+    
+    if (!file_node) {
+        if (flags & VFS_O_CREAT) {
+            kputs("vfs_open: File creation not implemented yet");
+            return -1;
+        } else {
+            kprintf("vfs_open: File not found: %s\n", path);
+            return -1;
+        }
+    }
+    
+    // Check if it's a file (not a directory)
+    if (file_node->type == D_DIR) {
+        kputs("vfs_open: Cannot open directory as file");
+        return -1;
+    }
+    
+    // Load file content into buffer
+    uint8_t* file_buffer = NULL;
+    uint32_t file_size = 0;
+    
+    if (vfs_load_file_content(file_node, &file_buffer, &file_size) != 0) {
+        kprintf("vfs_open: Failed to load file content for %s\n", path);
+        return -1;
+    }
+    
+    // Initialize file descriptor
+    open_files[fd].node = file_node;
+    open_files[fd].position = (flags & VFS_O_APPEND) ? file_size : 0;
+    open_files[fd].flags = flags;
+    open_files[fd].mode = mode;
+    open_files[fd].buffer = file_buffer;
+    open_files[fd].buffer_size = file_size;
+    open_files[fd].is_open = 1;
+    
+    kprintf("vfs_open: Opened file %s (fd=%d, size=%d)\n", path, fd, file_size);
+    return fd;
+}
+
+
 void init_vfs(){
     // Initialize globals
     num_mounted_fs = 0;
     vfs_root = NULL;
+
+    // Initialize file descriptor table
+    vfs_init_file_table();
     
     // read the superblock, bgd table, and inode table from disk
     read_superblock();
@@ -252,23 +435,12 @@ void init_vfs(){
         return;
     }
 
-    // List root directory
-    vfs_list_directory(vfs_root);
-    
-    // Find and list the "first" directory
-    vfs_node_t* first_dir = vfs_find_child(vfs_root, "first");
-    if (first_dir) {
-        vfs_list_directory(first_dir);
-        
-        // Find and list the "second" directory inside "first"
-        vfs_node_t* second_dir = vfs_find_child(first_dir, "second");
-        if (second_dir) {
-            vfs_list_directory(second_dir);
-        } else {
-            kputs("Could not find 'second' directory inside 'first'");
-        }
+    int fd = vfs_open("/first/second/test.txt", VFS_O_RDONLY, 0);
+    if (fd >= 0) {
+        kprintf("Successfully opened test.txt with fd=%d\n", fd);
+        // vfs_close(fd);
     } else {
-        kputs("Could not find 'first' directory");
+        kputs("Failed to open test.txt");
     }
 }
 
