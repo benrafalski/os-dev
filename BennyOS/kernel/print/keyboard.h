@@ -39,23 +39,6 @@ char scancode_ascii(const char scan_code)
     }
 }
 
-void command_ls(){
-    // kputs("");
-    // print_dirlist(cwd);
-}
-
-void command_cd(char* path){
-    // kputs("");
-    // vfs_cd(path);
-}
-
-void command_cat(char* path){
-    // kputs("");
-    // char* buff = vfs_read_file(path); 
-    // if(buff){
-    //     kputs(buff);
-    // }
-}
 
 char read_key(void){
     uint16_t pos = get_cursor_position();
@@ -92,23 +75,19 @@ char read_key(void){
             else if(key == ENTER){
                 uint32_t nargs = strsplit(buff, ' ');
 
-                if(strcmp("clear", buff)) clear_screen();
+                if(strcmp("clear", buff) == 0) clear_screen();
                 // In newer versions of QEMU, you can do shutdown with
-                else if(strcmp("exit", buff)) outw(0x604, 0x2000);
-                else if(strcmp("ls", buff)) command_ls();
-                else if(strcmp("cd", buff)) command_cd(buff + 3);
-                else if(strcmp("cat", buff)) command_cat(buff + 4);
+                else if(strcmp("exit", buff) == 0) outw(0x604, 0x2000);
 
                 else {
-                    kputs("");
-                    char msg[1000] = "Unrecognized command: ";
-                    strcat(msg, buff);
-                    kputs(msg);
+                    if(buffer > 0) {
+                        kprintf("\nCommand not recognized: '%s'", buff);
+                    }
                 }
 reset:                
                 for(int i = 0; i < buffer; i++) buff[i] = 0;
                 buffer = 0;
-                kprintf(">: ", 0);
+                kprintf("\n>: ");
             } else if (key != BACKSPACE){
                 buff[buffer] = key;
                 print_char(key, x, y);

@@ -191,6 +191,11 @@ typedef struct dir_list_node_t{
 super_block_t superblock = {0};
 bgd_table_t bgd_table = {0};
 inode_t inode_table[INODE_TABLE_SIZE] = {0};
+uint32_t ext2_block_size = 0;
+
+#define GET_BLOCK_SIZE() (ext2_block_size ? ext2_block_size : (ext2_block_size = (1024 << superblock.block_size)))
+#define GET_SECTORS_PER_BLOCK() (GET_BLOCK_SIZE() / SECTOR_SIZE)
+#define GET_POINTERS_PER_BLOCK() (GET_BLOCK_SIZE() / 4)
 
 void read_superblock(){
     ata_lba_read(SUPER_BLOCK_LBA, SUPER_BLOCK_SIZE/SECTOR_SIZE, (char*)&superblock);
@@ -201,6 +206,8 @@ void read_superblock(){
     if(superblock.fs_state != 1){
         panic("Filesystem has errors...");
     }
+
+    ext2_block_size = 1024 << superblock.block_size;
 }
 
 void read_bgd_table(){
@@ -238,21 +245,24 @@ void read_inode(uint32_t inode, inode_t* inode_struct){
 // Helper function to read a block of data
 void read_block(uint32_t block_num, char* buffer) {
     if (block_num == 0) return; // No block allocated
-    read_sectors_lba(LBA_4096(block_num), 8, buffer); // 8 sectors = 4096 bytes
+    read_sectors_lba(LBA_4096(block_num), GET_SECTORS_PER_BLOCK(), buffer);
 }
 
 // Helper function to read indirect blocks
 void read_indirect_blocks(uint32_t indirect_block, char* buffer, uint32_t* buffer_offset, uint32_t max_size) {
     if (indirect_block == 0) return;
     
+    uint32_t block_size = GET_BLOCK_SIZE();
+    uint32_t pointers_per_block = GET_POINTERS_PER_BLOCK();
+    
     // Read the indirect block (contains block pointers)
-    uint32_t* block_pointers = (uint32_t*)kmalloc(4096);
+    uint32_t* block_pointers = (uint32_t*)kmalloc(block_size);
     read_block(indirect_block, (char*)block_pointers);
     
     // Read each data block pointed to by the indirect block
-    for (int i = 0; i < 1024 && *buffer_offset < max_size; i++) {
+    for (uint32_t i = 0; i < pointers_per_block && *buffer_offset < max_size; i++) {
         if (block_pointers[i] != 0) {
-            uint32_t bytes_to_read = (max_size - *buffer_offset > 4096) ? 4096 : (max_size - *buffer_offset);
+            uint32_t bytes_to_read = (max_size - *buffer_offset > block_size) ? block_size : (max_size - *buffer_offset);
             read_block(block_pointers[i], buffer + *buffer_offset);
             *buffer_offset += bytes_to_read;
         }
@@ -265,12 +275,15 @@ void read_indirect_blocks(uint32_t indirect_block, char* buffer, uint32_t* buffe
 void read_doubly_indirect_blocks(uint32_t doubly_indirect_block, char* buffer, uint32_t* buffer_offset, uint32_t max_size) {
     if (doubly_indirect_block == 0) return;
     
+    uint32_t block_size = GET_BLOCK_SIZE();
+    uint32_t pointers_per_block = GET_POINTERS_PER_BLOCK();
+    
     // Read the doubly indirect block (contains pointers to singly indirect blocks)
-    uint32_t* indirect_pointers = (uint32_t*)kmalloc(4096);
+    uint32_t* indirect_pointers = (uint32_t*)kmalloc(block_size);
     read_block(doubly_indirect_block, (char*)indirect_pointers);
     
     // Read each singly indirect block
-    for (int i = 0; i < 1024 && *buffer_offset < max_size; i++) {
+    for (uint32_t i = 0; i < pointers_per_block && *buffer_offset < max_size; i++) {
         if (indirect_pointers[i] != 0) {
             read_indirect_blocks(indirect_pointers[i], buffer, buffer_offset, max_size);
         }
@@ -283,12 +296,15 @@ void read_doubly_indirect_blocks(uint32_t doubly_indirect_block, char* buffer, u
 void read_triply_indirect_blocks(uint32_t triply_indirect_block, char* buffer, uint32_t* buffer_offset, uint32_t max_size) {
     if (triply_indirect_block == 0) return;
     
+    uint32_t block_size = GET_BLOCK_SIZE();
+    uint32_t pointers_per_block = GET_POINTERS_PER_BLOCK();
+    
     // Read the triply indirect block (contains pointers to doubly indirect blocks)
-    uint32_t* doubly_indirect_pointers = (uint32_t*)kmalloc(4096);
+    uint32_t* doubly_indirect_pointers = (uint32_t*)kmalloc(block_size);
     read_block(triply_indirect_block, (char*)doubly_indirect_pointers);
     
     // Read each doubly indirect block
-    for (int i = 0; i < 1024 && *buffer_offset < max_size; i++) {
+    for (uint32_t i = 0; i < pointers_per_block && *buffer_offset < max_size; i++) {
         if (doubly_indirect_pointers[i] != 0) {
             read_doubly_indirect_blocks(doubly_indirect_pointers[i], buffer, buffer_offset, max_size);
         }
@@ -301,12 +317,13 @@ void read_triply_indirect_blocks(uint32_t triply_indirect_block, char* buffer, u
 void read_inode_data(inode_t inode, char* buff_addr) {
     uint32_t file_size = inode.size_lower;
     uint32_t buffer_offset = 0;
+    uint32_t block_size = GET_BLOCK_SIZE();
     
     // Read direct blocks (dptr0 - dptr11)
     for (int i = 0; i < 12 && buffer_offset < file_size; i++) {
         uint32_t* dptr = &inode.dptr0 + i; // Get pointer to dptr[i]
         if (*dptr != 0) {
-            uint32_t bytes_to_read = (file_size - buffer_offset > 4096) ? 4096 : (file_size - buffer_offset);
+            uint32_t bytes_to_read = (file_size - buffer_offset > block_size) ? block_size : (file_size - buffer_offset);
             read_block(*dptr, buff_addr + buffer_offset);
             buffer_offset += bytes_to_read;
         }

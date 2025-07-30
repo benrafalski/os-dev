@@ -586,42 +586,42 @@ void init_vfs(){
     }
 
     int fd = vfs_open("/first/second/test.txt", VFS_O_RDONLY, 0);
-    if (fd >= 0) {
-        kprintf("Successfully opened test.txt with fd=%d\n", fd);
+    // if (fd >= 0) {
+    //     kprintf("Successfully opened test.txt with fd=%d\n", fd);
         
-        // Test reading the file
-        char read_buffer[512];
-        int bytes_read = vfs_read(fd, read_buffer, sizeof(read_buffer) - 1);
-        if (bytes_read > 0) {
-            read_buffer[bytes_read] = '\0'; // Null terminate for printing
-            kprintf("Read %d bytes: '%s'\n", bytes_read, read_buffer);
-        } else if (bytes_read == 0) {
-            kputs("File is empty or at EOF");
-        } else {
-            kputs("Failed to read file");
-        }
+    //     // Test reading the file
+    //     char read_buffer[512];
+    //     int bytes_read = vfs_read(fd, read_buffer, sizeof(read_buffer) - 1);
+    //     if (bytes_read > 0) {
+    //         read_buffer[bytes_read] = '\0'; // Null terminate for printing
+    //         kprintf("Read %d bytes: '%s'\n", bytes_read, read_buffer);
+    //     } else if (bytes_read == 0) {
+    //         kputs("File is empty or at EOF");
+    //     } else {
+    //         kputs("Failed to read file");
+    //     }
         
-        // Test seeking
-        if (vfs_seek(fd, 0, 0) >= 0) { // Seek to beginning
-            kputs("Seeked to beginning of file");
+    //     // Test seeking
+    //     if (vfs_seek(fd, 0, 0) >= 0) { // Seek to beginning
+    //         kputs("Seeked to beginning of file");
             
-            // Read again from the beginning
-            bytes_read = vfs_read(fd, read_buffer, 10); // Read first 10 bytes
-            if (bytes_read > 0) {
-                read_buffer[bytes_read] = '\0';
-                kprintf("First 10 bytes: '%s'\n", read_buffer);
-            }
-        }
+    //         // Read again from the beginning
+    //         bytes_read = vfs_read(fd, read_buffer, 10); // Read first 10 bytes
+    //         if (bytes_read > 0) {
+    //             read_buffer[bytes_read] = '\0';
+    //             kprintf("First 10 bytes: '%s'\n", read_buffer);
+    //         }
+    //     }
         
-        // Close the file
-        if (vfs_close(fd) == 0) {
-            kputs("Successfully closed test.txt");
-        } else {
-            kputs("Failed to close test.txt");
-        }
-    } else {
-        kputs("Failed to open test.txt");
-    }
+    //     // Close the file
+    //     if (vfs_close(fd) == 0) {
+    //         kputs("Successfully closed test.txt");
+    //     } else {
+    //         kputs("Failed to close test.txt");
+    //     }
+    // } else {
+    //     kputs("Failed to open test.txt");
+    // }
 }
 
 

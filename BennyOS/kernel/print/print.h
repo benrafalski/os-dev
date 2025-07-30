@@ -63,86 +63,20 @@ void print_char(const char c, int x, int y){
     // return;
 }
 
-void kputs(const char *str)
-{
-    int len = strlen(str);
-    uint16_t pos = get_cursor_position();
-    int x = pos % VGA_WIDTH;
-    int y = pos / VGA_WIDTH;
-
-    while(*str != '\0'){
-
-        if(*str == '\n'){
-            y++;
-            x = 0;
-            str++;
-            continue;
-        }
-
-        print_char(*str, x, y);
-        x++;
-        str++;
+void scroll_screen() {
+    // Copy all lines except the first one up by one line
+    volatile uint16_t* video = (volatile uint16_t*)VIDEO_MEMORY;
+    
+    // Move (VGA_HEIGHT - 1) lines of VGA_WIDTH characters each
+    for (int i = 0; i < (VGA_HEIGHT - 1) * VGA_WIDTH; i++) {
+        video[i] = video[i + VGA_WIDTH];
     }
-    y += (len / VGA_WIDTH) + 1;
-    update_cursor(0, y);
+    
+    // Clear the bottom line
+    for (int i = (VGA_HEIGHT - 1) * VGA_WIDTH; i < VGA_HEIGHT * VGA_WIDTH; i++) {
+        video[i] = (' ' | (color << 8));
+    }
 }
-
-// void kprintf(const char* fmt, uint64_t arg) {
-//     uint16_t pos = get_cursor_position();
-//     int x = pos % VGA_WIDTH;
-//     int y = pos / VGA_WIDTH;
-
-//     char buf[32];  // buffer for number conversion
-//     const char* str = fmt;
-
-//     while (*str != '\0') {
-//         if (*str == '%') {
-//             str++;  // skip '%'
-
-//             if (*str == 'd') {
-//                 citoa(arg, buf, 10);
-//                 for (char* p = buf; *p; p++) {
-//                     print_char(*p, x++, y);
-//                 }
-//             } else if (*str == 'x') {
-//                 citoa(arg, buf, 16);
-//                 for (char* p = buf; *p; p++) {
-//                     print_char(*p, x++, y);
-//                 }
-//             } else if (*str == 'c') {
-//                 print_char((char)arg, x++, y);
-//             } else if (*str == 'p') {
-//                 citoa(arg, buf, 16);
-            
-//                 print_char('0', x++, y);
-//                 print_char('x', x++, y);
-            
-//                 for (char* p = buf; *p; p++) {
-//                     print_char(*p, x++, y);
-//                 }
-//             }
-//             else {
-//                 // Unknown format specifier, print as-is
-//                 print_char('%', x++, y);
-//                 print_char(*str, x++, y);
-//             }
-
-//             str++;  // move past format char
-//             continue;
-//         }
-
-//         if (*str == '\n') {
-//             x = 0;
-//             y++;
-//             str++;
-//             continue;
-//         }
-
-//         print_char(*str++, x++, y);
-//     }
-
-//     update_cursor(x, y);
-// }
 
 void kprintf(const char* fmt, ...) {
     va_list args;
@@ -163,35 +97,118 @@ void kprintf(const char* fmt, ...) {
                 uint64_t arg = va_arg(args, uint64_t);
                 citoa(arg, buf, 10);
                 for (char* p = buf; *p; p++) {
+                    if (x >= VGA_WIDTH) {
+                        x = 0;
+                        y++;
+                        // Check if we need to scroll
+                        if (y >= VGA_HEIGHT) {
+                            scroll_screen();
+                            y = VGA_HEIGHT - 1;
+                        }
+                    }
                     print_char(*p, x++, y);
                 }
             } else if (*str == 'x') {
                 uint64_t arg = va_arg(args, uint64_t);
                 citoa(arg, buf, 16);
                 for (char* p = buf; *p; p++) {
+                    if (x >= VGA_WIDTH) {
+                        x = 0;
+                        y++;
+                        if (y >= VGA_HEIGHT) {
+                            scroll_screen();
+                            y = VGA_HEIGHT - 1;
+                        }
+                    }
                     print_char(*p, x++, y);
                 }
             } else if (*str == 'c') {
-                char arg = (char)va_arg(args, int);  // char is promoted to int
+                char arg = (char)va_arg(args, int);
+                if (x >= VGA_WIDTH) {
+                    x = 0;
+                    y++;
+                    if (y >= VGA_HEIGHT) {
+                        scroll_screen();
+                        y = VGA_HEIGHT - 1;
+                    }
+                }
                 print_char(arg, x++, y);
             } else if (*str == 's') {
                 char* arg = va_arg(args, char*);
                 while (*arg) {
+                    if (*arg == '\n') {
+                        x = 0;
+                        y++;
+                        if (y >= VGA_HEIGHT) {
+                            scroll_screen();
+                            y = VGA_HEIGHT - 1;
+                        }
+                        arg++;
+                        continue;
+                    }
+                    if (x >= VGA_WIDTH) {
+                        x = 0;
+                        y++;
+                        if (y >= VGA_HEIGHT) {
+                            scroll_screen();
+                            y = VGA_HEIGHT - 1;
+                        }
+                    }
                     print_char(*arg++, x++, y);
                 }
             } else if (*str == 'p') {
                 uint64_t arg = va_arg(args, uint64_t);
                 citoa(arg, buf, 16);
             
+                if (x >= VGA_WIDTH) { 
+                    x = 0; 
+                    y++; 
+                    if (y >= VGA_HEIGHT) {
+                        scroll_screen();
+                        y = VGA_HEIGHT - 1;
+                    }
+                }
                 print_char('0', x++, y);
+                if (x >= VGA_WIDTH) { 
+                    x = 0; 
+                    y++; 
+                    if (y >= VGA_HEIGHT) {
+                        scroll_screen();
+                        y = VGA_HEIGHT - 1;
+                    }
+                }
                 print_char('x', x++, y);
             
                 for (char* p = buf; *p; p++) {
+                    if (x >= VGA_WIDTH) {
+                        x = 0;
+                        y++;
+                        if (y >= VGA_HEIGHT) {
+                            scroll_screen();
+                            y = VGA_HEIGHT - 1;
+                        }
+                    }
                     print_char(*p, x++, y);
                 }
             } else {
                 // Unknown format specifier, print as-is
+                if (x >= VGA_WIDTH) { 
+                    x = 0; 
+                    y++; 
+                    if (y >= VGA_HEIGHT) {
+                        scroll_screen();
+                        y = VGA_HEIGHT - 1;
+                    }
+                }
                 print_char('%', x++, y);
+                if (x >= VGA_WIDTH) { 
+                    x = 0; 
+                    y++; 
+                    if (y >= VGA_HEIGHT) {
+                        scroll_screen();
+                        y = VGA_HEIGHT - 1;
+                    }
+                }
                 print_char(*str, x++, y);
             }
 
@@ -202,15 +219,68 @@ void kprintf(const char* fmt, ...) {
         if (*str == '\n') {
             x = 0;
             y++;
+            if (y >= VGA_HEIGHT) {
+                scroll_screen();
+                y = VGA_HEIGHT - 1;
+            }
             str++;
             continue;
         }
 
+        if (x >= VGA_WIDTH) {
+            x = 0;
+            y++;
+            if (y >= VGA_HEIGHT) {
+                scroll_screen();
+                y = VGA_HEIGHT - 1;
+            }
+        }
         print_char(*str++, x++, y);
     }
 
     va_end(args);
     update_cursor(x, y);
+}
+
+void kputs(const char *str)
+{
+    uint16_t pos = get_cursor_position();
+    int x = pos % VGA_WIDTH;
+    int y = pos / VGA_WIDTH;
+
+    while(*str != '\0'){
+        if(*str == '\n'){
+            y++;
+            x = 0;
+            if (y >= VGA_HEIGHT) {
+                scroll_screen();
+                y = VGA_HEIGHT - 1;
+            }
+            str++;
+            continue;
+        }
+
+        if (x >= VGA_WIDTH) {
+            x = 0;
+            y++;
+            if (y >= VGA_HEIGHT) {
+                scroll_screen();
+                y = VGA_HEIGHT - 1;
+            }
+        }
+
+        print_char(*str, x, y);
+        x++;
+        str++;
+    }
+    
+    // Handle final newline positioning
+    y++;
+    if (y >= VGA_HEIGHT) {
+        scroll_screen();
+        y = VGA_HEIGHT - 1;
+    }
+    update_cursor(0, y);
 }
 
 
