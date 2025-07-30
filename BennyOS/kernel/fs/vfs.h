@@ -413,6 +413,156 @@ int vfs_open(const char* path, uint32_t flags, uint32_t mode) {
     return fd;
 }
 
+// VFS close function
+int vfs_close(int fd) {
+    // Validate file descriptor
+    if (fd < 0 || fd >= MAX_OPEN_FILES) {
+        kputs("vfs_close: Invalid file descriptor");
+        return -1;
+    }
+    
+    // Check if file is actually open
+    if (!open_files[fd].is_open) {
+        kputs("vfs_close: File descriptor not open");
+        return -1;
+    }
+    
+    // Free the file buffer if allocated
+    if (open_files[fd].buffer) {
+        kfree(open_files[fd].buffer);
+        open_files[fd].buffer = NULL;
+    }
+    
+    // Clear the file descriptor entry
+    open_files[fd].node = NULL;
+    open_files[fd].position = 0;
+    open_files[fd].flags = 0;
+    open_files[fd].mode = 0;
+    open_files[fd].buffer_size = 0;
+    open_files[fd].is_open = 0;
+    
+    kprintf("vfs_close: Closed file descriptor %d\n", fd);
+    return 0;
+}
+
+// VFS read function
+int vfs_read(int fd, void* buffer, size_t count) {
+    // Validate file descriptor
+    if (fd < 0 || fd >= MAX_OPEN_FILES) {
+        kputs("vfs_read: Invalid file descriptor");
+        return -1;
+    }
+    
+    // Check if file is actually open
+    if (!open_files[fd].is_open) {
+        kputs("vfs_read: File descriptor not open");
+        return -1;
+    }
+    
+    // Check if file is opened for reading
+    if ((open_files[fd].flags & VFS_O_WRONLY) == VFS_O_WRONLY) {
+        kputs("vfs_read: File not opened for reading");
+        return -1;
+    }
+    
+    // Validate buffer
+    if (!buffer) {
+        kputs("vfs_read: Invalid buffer");
+        return -1;
+    }
+    
+    // Get current position and file size
+    uint32_t position = open_files[fd].position;
+    uint32_t file_size = open_files[fd].buffer_size;
+    
+    // Check if we're at end of file
+    if (position >= file_size) {
+        return 0; // EOF
+    }
+    
+    // Calculate how much we can actually read
+    size_t bytes_to_read = count;
+    if (position + bytes_to_read > file_size) {
+        bytes_to_read = file_size - position;
+    }
+    
+    // Copy data from file buffer to user buffer
+    uint8_t* src = open_files[fd].buffer + position;
+    uint8_t* dest = (uint8_t*)buffer;
+    
+    for (size_t i = 0; i < bytes_to_read; i++) {
+        dest[i] = src[i];
+    }
+    
+    // Update file position
+    open_files[fd].position += bytes_to_read;
+    
+    kprintf("vfs_read: Read %d bytes from fd=%d\n", bytes_to_read, fd);
+    return (int)bytes_to_read;
+}
+
+// VFS seek function (useful for positioning within files)
+int vfs_seek(int fd, uint32_t offset, int whence) {
+    // Validate file descriptor
+    if (fd < 0 || fd >= MAX_OPEN_FILES) {
+        kputs("vfs_seek: Invalid file descriptor");
+        return -1;
+    }
+    
+    // Check if file is actually open
+    if (!open_files[fd].is_open) {
+        kputs("vfs_seek: File descriptor not open");
+        return -1;
+    }
+    
+    uint32_t new_position;
+    uint32_t file_size = open_files[fd].buffer_size;
+    
+    // Calculate new position based on whence
+    switch (whence) {
+        case 0: // SEEK_SET - absolute position
+            new_position = offset;
+            break;
+        case 1: // SEEK_CUR - relative to current position
+            new_position = open_files[fd].position + offset;
+            break;
+        case 2: // SEEK_END - relative to end of file
+            new_position = file_size + offset;
+            break;
+        default:
+            kputs("vfs_seek: Invalid whence parameter");
+            return -1;
+    }
+    
+    // Validate new position (don't allow seeking beyond file)
+    if (new_position > file_size) {
+        new_position = file_size;
+    }
+    
+    // Update position
+    open_files[fd].position = new_position;
+    
+    kprintf("vfs_seek: Set position to %d for fd=%d\n", new_position, fd);
+    return new_position;
+}
+
+// Helper function to get file size
+uint32_t vfs_get_file_size(int fd) {
+    if (fd < 0 || fd >= MAX_OPEN_FILES || !open_files[fd].is_open) {
+        return 0;
+    }
+    return open_files[fd].buffer_size;
+}
+
+// Helper function to get current file position
+uint32_t vfs_get_position(int fd) {
+    if (fd < 0 || fd >= MAX_OPEN_FILES || !open_files[fd].is_open) {
+        return 0;
+    }
+    return open_files[fd].position;
+}
+
+
 
 void init_vfs(){
     // Initialize globals
@@ -438,7 +588,37 @@ void init_vfs(){
     int fd = vfs_open("/first/second/test.txt", VFS_O_RDONLY, 0);
     if (fd >= 0) {
         kprintf("Successfully opened test.txt with fd=%d\n", fd);
-        // vfs_close(fd);
+        
+        // Test reading the file
+        char read_buffer[512];
+        int bytes_read = vfs_read(fd, read_buffer, sizeof(read_buffer) - 1);
+        if (bytes_read > 0) {
+            read_buffer[bytes_read] = '\0'; // Null terminate for printing
+            kprintf("Read %d bytes: '%s'\n", bytes_read, read_buffer);
+        } else if (bytes_read == 0) {
+            kputs("File is empty or at EOF");
+        } else {
+            kputs("Failed to read file");
+        }
+        
+        // Test seeking
+        if (vfs_seek(fd, 0, 0) >= 0) { // Seek to beginning
+            kputs("Seeked to beginning of file");
+            
+            // Read again from the beginning
+            bytes_read = vfs_read(fd, read_buffer, 10); // Read first 10 bytes
+            if (bytes_read > 0) {
+                read_buffer[bytes_read] = '\0';
+                kprintf("First 10 bytes: '%s'\n", read_buffer);
+            }
+        }
+        
+        // Close the file
+        if (vfs_close(fd) == 0) {
+            kputs("Successfully closed test.txt");
+        } else {
+            kputs("Failed to close test.txt");
+        }
     } else {
         kputs("Failed to open test.txt");
     }

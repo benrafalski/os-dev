@@ -9,9 +9,6 @@ Organizationally, it divides disk space up into groups called "block groups."
 Block: fs divides the disk space into logical blocks of contiguous space
 Block groups: contiguous groups of blocks, some of the blocks are used for metadata
 Inode: structure on the disk that represents a file, dir, or sym-link; not an actual file but link to block with the actual file
-
-
-
 */
 
 #define SUPER_BLOCK_LBA     2
@@ -152,7 +149,7 @@ typedef struct {
     uint32_t    sector_count;               // count if disk sectors in use by inode
     uint32_t    flags;                      // flags
     uint32_t    os_spec1;                   // OS specific value 1
-    uint32_t    dptr0;                      // Direct Block Pointer 0
+    uint32_t    dptr0;                      // Direct Block Pointer 0, 12 × 4096 = 49,152 bytes (48 KB)
     uint32_t    dptr1;                      // Direct Block Pointer 1
     uint32_t    dptr2;                      // Direct Block Pointer 2
     uint32_t    dptr3;                      // Direct Block Pointer 3
@@ -164,9 +161,9 @@ typedef struct {
     uint32_t    dptr9;                      // Direct Block Pointer 9
     uint32_t    dptr10;                     // Direct Block Pointer 10
     uint32_t    dptr11;                     // Direct Block Pointer 11
-    uint32_t    sing_idptr;                 // singly indirect block pointer
-    uint32_t    doub_idptr;                 // doubly indirect block pointer
-    uint32_t    trip_idptr;                 // triply indirect block pointer
+    uint32_t    sing_idptr;                 // singly indirect block pointer, 1024 × 4096 = 4,194,304 bytes (4 MB)
+    uint32_t    doub_idptr;                 // doubly indirect block pointer, 1024 × 1024 × 4096 = 4,294,967,296 bytes (4 GB)
+    uint32_t    trip_idptr;                 // triply indirect block pointer, 1024 × 1024 × 1024 × 4096 = 4,398,046,511,104 bytes (4 TB)
     uint32_t    gen_number;                 // generation number
     uint32_t    ext_attr;                   // In version >= 1, extended attribute block
     uint32_t    size_upper;                 // In version >= 1, upper 32 bits of file size
@@ -192,93 +189,8 @@ typedef struct dir_list_node_t{
 
 
 super_block_t superblock = {0};
-    // uint32_t    num_inodes;                 // 0x00008000
-    // uint32_t    num_blocks;                 // 0x00008000
-    // uint32_t    num_reserved_blocks;        // 0x00000666
-    // uint32_t    num_unalloc_blocks;         // 0x00007be8
-    // uint32_t    num_unalloc_inodes;         // 0x00007ff4
-    // uint32_t    superblock_blocknum;        // 0x00000000
-    // uint32_t    block_size;                 // 0x00000002 -> 4096 is block size
-    // uint32_t    fragment_size;              // 0x00000002
-    // uint32_t    num_blocks_blockgroup;      // 0x00008000
-    // uint32_t    num_frags_blockgroup;       // 0x00008000
-    // uint32_t    num_inodes_blockgroup;      // 0x00008000
-    // uint32_t    last_mount;                 // 0x66ff2f1f
-    // uint32_t    last_write;                 // 0x66ff2f1f
-    // uint16_t    mounts_since_cc;            // 0x0001
-    // uint16_t    mounts_before_cc;           // 0xffff
-    // uint16_t    signature;                  // 0xef53
-    // uint16_t    fs_state;                   // 0x0001
-    // uint16_t    error;                      // 0x0001
-    // uint16_t    ver_minor;                  // 0x0000
-    // uint32_t    last_cc;                    // 0x66ff2f1
-    // uint32_t    int_force_cc;               // 0x00000000
-    // uint32_t    os_id;                      // 0x00000000
-    // uint32_t    ver_major;                  // 0x00000001
-    // uint16_t    reserve_user;               // 0x00000000
-    // uint16_t    reserve_group;              // 0x0000000b
 bgd_table_t bgd_table = {0};
-    // uint32_t    blk_use_bitmap;             // 0x00000009
-    // uint32_t    inode_use_bitmap;           // 0x0000000a
-    // uint32_t    inode_table;                // 0x0000000b
-    // uint16_t    unalloc_blocks;             // 0x7ff47be8
-    // uint16_t    unalloc_inodes;             // 0x00000002
-    // uint8_t     unused[14];                 // padding
-
 inode_t inode_table[INODE_TABLE_SIZE] = {0};
-    // 0xb300
-    // 0000b500
-    // 0000b580
-
-    // inode[0] at lba 88 -> nothing address is 0x100e0 in memory
-    // inode[1] at lba 88.25 -> root
-        // type 41ed -> DIR, U_RD, G_RD, U_EX, U_WR, G_EX, O_RD, O_EX  
-        // sector count 0x00000008
-        // osspec 0x00000002
-        // dptr0 0x0000040b
-    // inode[2] at lba 89.5 -> no clue
-        // type 0x8180 -> U_WR|U_RD|FILE
-        // sector count = 0x00000040
-        // doubly pointer = 0x00000410
-    // inode[3] at lba 90.5 -> lost+found
-        // type 0x41c0 -> DIR|U_RD|O_RD|G_EX
-        // sector count = 0x20
-        // dptr0 0x0000040c
-        // dptr1 0x0000040d
-        // dptr2 0x0000040e
-        // dptr3 0x0000040f
-    // inode at lba 90.75 -> kernel.bin
-        // type 0x81ed -> FILE|U_WR|U_EX|G_RD|G_EX|O_RD|O_EX
-        // sector count 0x00000038
-        // osspec value 0x00000001
-        // dptr0 0x00000411
-        // dptr1 0x00000412
-        // dptr2 0x00000413
-        // dptr3 0x00000414
-        // dptr4 0x00000415
-        // dptr5 0x00000416
-        // dptr6 0x00000417
-        // generation number = 0x9d93ebb0
-    // inode at lba 91 -> test.txt
-        // type 81ed
-        // sector count is 1
-        // dptr0 0x418
-
-    // start kernel.bin 0040b000
-
-// root
-// entry 1
-// inode = 0x00000002
-// size = 0x000c
-// name lsb = 0x02
-// 
-
-
-// extract the size of each block, 
-// the total number of inodes, 
-// the total number of blocks, 
-// the number of blocks per block group, 
-// and the number of inodes in each block group
 
 void read_superblock(){
     ata_lba_read(SUPER_BLOCK_LBA, SUPER_BLOCK_SIZE/SECTOR_SIZE, (char*)&superblock);
@@ -323,30 +235,143 @@ void read_inode(uint32_t inode, inode_t* inode_struct){
     read_sectors_lba(LBA_4096(inode), INODE_SIZE/SECTOR_SIZE, (char*)inode_struct);
 }
 
-
-void read_file_inode(inode_t inode, char* buff_addr){
-    if(!(inode.type_perms & FILE)){
-        panic("ext.h (read_file_inode): cannot read contents unless type is FILE");
-    }
-
-    uint32_t size = get_inode_size(inode);
-
-    if(inode.dptr0){
-        read_sectors_lba(LBA_4096(inode.dptr0), size/SECTOR_SIZE, (char*)buff_addr);
-    }
-
+// Helper function to read a block of data
+void read_block(uint32_t block_num, char* buffer) {
+    if (block_num == 0) return; // No block allocated
+    read_sectors_lba(LBA_4096(block_num), 8, buffer); // 8 sectors = 4096 bytes
 }
 
+// Helper function to read indirect blocks
+void read_indirect_blocks(uint32_t indirect_block, char* buffer, uint32_t* buffer_offset, uint32_t max_size) {
+    if (indirect_block == 0) return;
+    
+    // Read the indirect block (contains block pointers)
+    uint32_t* block_pointers = (uint32_t*)kmalloc(4096);
+    read_block(indirect_block, (char*)block_pointers);
+    
+    // Read each data block pointed to by the indirect block
+    for (int i = 0; i < 1024 && *buffer_offset < max_size; i++) {
+        if (block_pointers[i] != 0) {
+            uint32_t bytes_to_read = (max_size - *buffer_offset > 4096) ? 4096 : (max_size - *buffer_offset);
+            read_block(block_pointers[i], buffer + *buffer_offset);
+            *buffer_offset += bytes_to_read;
+        }
+    }
+    
+    kfree(block_pointers);
+}
+
+// Helper function to read doubly indirect blocks
+void read_doubly_indirect_blocks(uint32_t doubly_indirect_block, char* buffer, uint32_t* buffer_offset, uint32_t max_size) {
+    if (doubly_indirect_block == 0) return;
+    
+    // Read the doubly indirect block (contains pointers to singly indirect blocks)
+    uint32_t* indirect_pointers = (uint32_t*)kmalloc(4096);
+    read_block(doubly_indirect_block, (char*)indirect_pointers);
+    
+    // Read each singly indirect block
+    for (int i = 0; i < 1024 && *buffer_offset < max_size; i++) {
+        if (indirect_pointers[i] != 0) {
+            read_indirect_blocks(indirect_pointers[i], buffer, buffer_offset, max_size);
+        }
+    }
+    
+    kfree(indirect_pointers);
+}
+
+// Helper function to read triply indirect blocks
+void read_triply_indirect_blocks(uint32_t triply_indirect_block, char* buffer, uint32_t* buffer_offset, uint32_t max_size) {
+    if (triply_indirect_block == 0) return;
+    
+    // Read the triply indirect block (contains pointers to doubly indirect blocks)
+    uint32_t* doubly_indirect_pointers = (uint32_t*)kmalloc(4096);
+    read_block(triply_indirect_block, (char*)doubly_indirect_pointers);
+    
+    // Read each doubly indirect block
+    for (int i = 0; i < 1024 && *buffer_offset < max_size; i++) {
+        if (doubly_indirect_pointers[i] != 0) {
+            read_doubly_indirect_blocks(doubly_indirect_pointers[i], buffer, buffer_offset, max_size);
+        }
+    }
+    
+    kfree(doubly_indirect_pointers);
+}
+
+// Enhanced function to read all blocks from an inode
+void read_inode_data(inode_t inode, char* buff_addr) {
+    uint32_t file_size = inode.size_lower;
+    uint32_t buffer_offset = 0;
+    
+    // Read direct blocks (dptr0 - dptr11)
+    for (int i = 0; i < 12 && buffer_offset < file_size; i++) {
+        uint32_t* dptr = &inode.dptr0 + i; // Get pointer to dptr[i]
+        if (*dptr != 0) {
+            uint32_t bytes_to_read = (file_size - buffer_offset > 4096) ? 4096 : (file_size - buffer_offset);
+            read_block(*dptr, buff_addr + buffer_offset);
+            buffer_offset += bytes_to_read;
+        }
+    }
+    
+    // Read singly indirect blocks
+    if (inode.sing_idptr != 0 && buffer_offset < file_size) {
+        read_indirect_blocks(inode.sing_idptr, buff_addr, &buffer_offset, file_size);
+    }
+    
+    // Read doubly indirect blocks
+    if (inode.doub_idptr != 0 && buffer_offset < file_size) {
+        read_doubly_indirect_blocks(inode.doub_idptr, buff_addr, &buffer_offset, file_size);
+    }
+    
+    // Read triply indirect blocks
+    if (inode.trip_idptr != 0 && buffer_offset < file_size) {
+        read_triply_indirect_blocks(inode.trip_idptr, buff_addr, &buffer_offset, file_size);
+    }
+}
+
+// Updated read_dir_inode function
 void read_dir_inode(inode_t inode, char* buff_addr){
     if(!(inode.type_perms & DIR)){
         panic("ext.h (read_dir_inode): cannot read contents unless type is DIR");
     }
-
-    if(inode.dptr0){
-        read_sectors_lba(LBA_4096(inode.dptr0), 2, (char*)buff_addr);
-    }
-
+    
+    // Use the enhanced function to read all blocks
+    read_inode_data(inode, buff_addr);
 }
+
+// Updated read_file_inode function
+void read_file_inode(inode_t inode, char* buff_addr){
+    if(!(inode.type_perms & FILE)){
+        panic("ext.h (read_file_inode): cannot read contents unless type is FILE");
+    }
+    
+    // Use the enhanced function to read all blocks
+    read_inode_data(inode, buff_addr);
+}
+
+
+// void read_file_inode(inode_t inode, char* buff_addr){
+//     if(!(inode.type_perms & FILE)){
+//         panic("ext.h (read_file_inode): cannot read contents unless type is FILE");
+//     }
+
+//     uint32_t size = get_inode_size(inode);
+
+//     if(inode.dptr0){
+//         read_sectors_lba(LBA_4096(inode.dptr0), size/SECTOR_SIZE, (char*)buff_addr);
+//     }
+
+// }
+
+// void read_dir_inode(inode_t inode, char* buff_addr){
+//     if(!(inode.type_perms & DIR)){
+//         panic("ext.h (read_dir_inode): cannot read contents unless type is DIR");
+//     }
+
+//     if(inode.dptr0){
+//         read_sectors_lba(LBA_4096(inode.dptr0), 2, (char*)buff_addr);
+//     }
+
+// }
 
 void read_dir_entry(dir_entry_t* dir_entry, char* buff_addr){
     memcpy(buff_addr, (char*)dir_entry, 8);
@@ -406,12 +431,6 @@ dir_list_node_t* read_directory(uint32_t inode_num){ // 0x951e
     // dir_list = 0; 
 
     return dir_list_head;
-}
-
-
-
-void ext2_read(){
-
 }
 
 
