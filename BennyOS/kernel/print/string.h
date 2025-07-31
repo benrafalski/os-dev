@@ -121,11 +121,11 @@ int strcmp(const char* s1, const char* s2){
     return (*s1 - *s2);
 }
 
-char* memcpy(char* src, char* dest, uint32_t length){
-    char* _src = src;
+char* memcpy(char* dest, const char* src, uint32_t length){
+    const char* _src = src;
     char* _dest = dest;
 
-    for(uint32_t i = 0; i < length;i++){
+    for(uint32_t i = 0; i < length; i++){
         *_dest = *_src;
         _src++;
         _dest++;
@@ -238,5 +238,63 @@ char* strtok(char* str, const char* delim) {
     return start;
 }
 
+
+int strncmp(const char* s1, const char* s2, int n) {
+    if (n == 0) {
+        return 0;  // No characters to compare
+    }
+    
+    while (n > 0 && *s1 != '\0' && *s2 != '\0') {
+        if (*s1 != *s2) {
+            return (*s1 - *s2);  // Return difference for unequal
+        }
+        s1++;
+        s2++;
+        n--;
+    }
+    
+    // If we've compared n characters and they're all equal
+    if (n == 0) {
+        return 0;
+    }
+    
+    // Handle case where one string ended before n characters
+    return (*s1 - *s2);
+}
+
+// Find first occurrence of substring needle in string haystack
+// Returns pointer to first occurrence, or NULL if not found
+char* strstr(const char* haystack, const char* needle) {
+    if (!haystack || !needle) {
+        return NULL;
+    }
+    
+    // Empty needle is found at the beginning of any string
+    if (*needle == '\0') {
+        return (char*)haystack;
+    }
+    
+    // Search for needle in haystack
+    while (*haystack != '\0') {
+        const char* h = haystack;
+        const char* n = needle;
+        
+        // Compare characters starting from current position
+        while (*h != '\0' && *n != '\0' && *h == *n) {
+            h++;
+            n++;
+        }
+        
+        // If we reached the end of needle, we found it
+        if (*n == '\0') {
+            return (char*)haystack;
+        }
+        
+        // Move to next character in haystack
+        haystack++;
+    }
+    
+    return NULL;  // Needle not found
+}
 
 

@@ -67,7 +67,7 @@ void main()
 
 
     init_vfs();
-    kprintf(">: ", 0);
+    kprintf(">: ");
     // // set stack to higher half too 
     // asm volatile (
     //     "mov %[stack_top], %%rsp\n" // Set RSP

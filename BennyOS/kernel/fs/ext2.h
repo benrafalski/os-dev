@@ -23,6 +23,8 @@ Inode: structure on the disk that represents a file, dir, or sym-link; not an ac
 #define INODE_TABLE_SIZE    20
 #define INODE_SIZE          128
 
+#define ROOT_INODE          2
+
 #define LBA_4096(n) (n * 8)
 
 
@@ -91,6 +93,7 @@ typedef struct {
 
 extern void ata_chs_read(chs_t chs, uint16_t num_sectors, char* buff_addr);
 extern void ata_lba_read(uint32_t lba, uint16_t num_sectors, char* buff_addr);
+extern void ata_lba_write(uint32_t lba, uint16_t num_sectors, char* buff_addr);
 
 
 typedef struct {
@@ -366,34 +369,12 @@ void read_file_inode(inode_t inode, char* buff_addr){
 }
 
 
-// void read_file_inode(inode_t inode, char* buff_addr){
-//     if(!(inode.type_perms & FILE)){
-//         panic("ext.h (read_file_inode): cannot read contents unless type is FILE");
-//     }
-
-//     uint32_t size = get_inode_size(inode);
-
-//     if(inode.dptr0){
-//         read_sectors_lba(LBA_4096(inode.dptr0), size/SECTOR_SIZE, (char*)buff_addr);
-//     }
-
-// }
-
-// void read_dir_inode(inode_t inode, char* buff_addr){
-//     if(!(inode.type_perms & DIR)){
-//         panic("ext.h (read_dir_inode): cannot read contents unless type is DIR");
-//     }
-
-//     if(inode.dptr0){
-//         read_sectors_lba(LBA_4096(inode.dptr0), 2, (char*)buff_addr);
-//     }
-
-// }
-
 void read_dir_entry(dir_entry_t* dir_entry, char* buff_addr){
-    memcpy(buff_addr, (char*)dir_entry, 8);
+    // memcpy(buff_addr, (char*)dir_entry, 8);
+    memcpy((char*)dir_entry, buff_addr, 8);
     dir_entry->name = (char*)kmalloc(dir_entry->name_lsb + 1);
-    memcpy(buff_addr + 8, dir_entry->name, dir_entry->name_lsb);
+    // memcpy(buff_addr + 8, dir_entry->name, dir_entry->name_lsb);
+    memcpy(dir_entry->name, buff_addr + 8, dir_entry->name_lsb);
     dir_entry->name[dir_entry->name_lsb] = 0;
 }
 
@@ -451,6 +432,358 @@ dir_list_node_t* read_directory(uint32_t inode_num){ // 0x951e
 }
 
 
+void write_block(uint32_t block_num, char* buffer) {
+    if (block_num == 0) return; // No block allocated
+    ata_lba_write(LBA_4096(block_num), GET_SECTORS_PER_BLOCK(), buffer);
+}
+
+// Helper function to write sectors using LBA
+void write_sectors_lba(uint32_t lba, uint16_t num_sectors, char* buff_addr){
+    char* start = buff_addr;
+    uint32_t lba_num = lba;
+    for(uint16_t i = 0; i < num_sectors; i++){
+        ata_lba_write(lba_num, 1, (char*)start);
+        lba_num++;
+        start += SECTOR_SIZE;
+    }
+}
+
+// Write superblock back to disk
+void write_superblock() {
+    ata_lba_write(SUPER_BLOCK_LBA, SUPER_BLOCK_SIZE/SECTOR_SIZE, (char*)&superblock);
+}
+
+// Write block group descriptor table back to disk
+void write_bgd_table() {
+    ata_lba_write(BGD_TABLE_LBA, BGD_TABLE_SIZE/SECTOR_SIZE, (char*)&bgd_table);
+}
+
+// Write inode table back to disk
+void write_inode_table() {
+    write_sectors_lba(LBA_4096(bgd_table.inode_table), (INODE_TABLE_SIZE*INODE_SIZE)/SECTOR_SIZE, (char*)&inode_table);
+}
+
+// Write a specific inode back to disk
+void write_inode(uint32_t inode_num, inode_t* inode_struct) {
+    if (inode_num <= INODE_TABLE_SIZE) {
+        // Update in-memory inode table
+        inode_table[inode_num - 1] = *inode_struct;
+        // Write entire inode table back (simple approach)
+        write_inode_table();
+        kprintf("write_inode: Updated cached inode %d, size=%d\n", inode_num, inode_struct->size_lower);
+    } else {
+        // Calculate the correct block and offset for this inode
+        uint32_t inode_index = inode_num - 1;  // Inodes are 1-indexed, array is 0-indexed
+        uint32_t inode_block = bgd_table.inode_table + (inode_index * INODE_SIZE) / GET_BLOCK_SIZE();
+        uint32_t inode_offset = (inode_index * INODE_SIZE) % GET_BLOCK_SIZE();
+        
+        kprintf("write_inode: Writing inode %d to block %d, offset %d\n", inode_num, inode_block, inode_offset);
+        
+        // Read the entire block containing this inode
+        char* block_buffer = (char*)kmalloc(GET_BLOCK_SIZE());
+        read_block(inode_block, block_buffer);
+        
+        // Update the inode within the block
+        memcpy(block_buffer + inode_offset, (char*)inode_struct, INODE_SIZE);
+        
+        // Write the block back to disk
+        write_block(inode_block, block_buffer);
+        
+        kfree(block_buffer);
+        kprintf("write_inode: Wrote inode %d to disk, size=%d\n", inode_num, inode_struct->size_lower);
+    }
+}
+
+// Simple block allocation (finds first free block)
+uint32_t allocate_block() {
+    // TODO: Implement proper block bitmap checking
+    // For now, return a hardcoded free block
+    static uint32_t next_free_block = 100; // Start after metadata blocks
+    return next_free_block++;
+}
+
+// Write data to inode blocks (handles direct blocks only for simplicity)
+int write_inode_data(inode_t* inode, char* data, uint32_t size) {
+    uint32_t block_size = GET_BLOCK_SIZE();
+    uint32_t blocks_needed = (size + block_size - 1) / block_size; // Round up
+    uint32_t data_offset = 0;
+    
+    // For simplicity, only handle direct blocks (up to 12 blocks)
+    if (blocks_needed > 12) {
+        kprintf("write_inode_data: File too large, need indirect blocks (not implemented)\n");
+        return -1;
+    }
+    
+    // Allocate and write direct blocks
+    for (uint32_t i = 0; i < blocks_needed; i++) {
+        uint32_t* dptr = &inode->dptr0 + i;
+        
+        // Allocate new block if not already allocated
+        if (*dptr == 0) {
+            *dptr = allocate_block();
+            kprintf("Allocated block %d for direct pointer %d\n", *dptr, i);
+        }
+        
+        // Prepare block data
+        char* block_buffer = (char*)kmalloc(block_size);
+        uint32_t bytes_to_write = (size - data_offset > block_size) ? block_size : (size - data_offset);
+        
+        // Copy data to block buffer
+        for (uint32_t j = 0; j < bytes_to_write; j++) {
+            block_buffer[j] = data[data_offset + j];
+        }
+        
+        // Zero-fill remainder of block
+        for (uint32_t j = bytes_to_write; j < block_size; j++) {
+            block_buffer[j] = 0;
+        }
+        
+        // Write block to disk
+        write_block(*dptr, block_buffer);
+        kprintf("Wrote %d bytes to block %d\n", bytes_to_write, *dptr);
+        
+        kfree(block_buffer);
+        data_offset += bytes_to_write;
+    }
+    
+    // Update inode size
+    inode->size_lower = size;
+    
+    return 0;
+}
+
+uint32_t allocate_inode() {
+    // TODO: Implement proper inode bitmap checking
+    // Start after known existing files - test.txt is at inode 15
+    static uint32_t next_free_inode = 25; // Start well after existing files
+    return next_free_inode++;
+}
+
+// Add directory entry to a directory
+int ext2_add_dir_entry(uint32_t dir_inode, uint32_t file_inode, const char* name, uint8_t type) {
+    // Get directory inode
+    inode_t directory;
+    if (dir_inode <= INODE_TABLE_SIZE) {
+        directory = inode_table[dir_inode - 1];
+    } else {
+        read_inode(dir_inode, &directory);
+    }
+    
+    // Calculate new entry size
+    uint8_t name_len = strlen(name);
+    uint16_t entry_size = 8 + name_len;  // Basic entry + name
+    if (entry_size % 4 != 0) {
+        entry_size += 4 - (entry_size % 4);  // Align to 4 bytes
+    }
+    
+    // For simplicity, just append to the first directory block
+    // In a real implementation, you'd properly manage directory block space
+    if (directory.dptr0 == 0) {
+        // Allocate first directory block
+        directory.dptr0 = allocate_block();
+        directory.size_lower = GET_BLOCK_SIZE();
+        
+        // Create initial directory content with "." and ".." entries
+        char* dir_block = (char*)kmalloc(GET_BLOCK_SIZE());
+        memset(dir_block, 0, GET_BLOCK_SIZE());
+        
+        // Add "." entry
+        dir_entry_t* dot_entry = (dir_entry_t*)dir_block;
+        dot_entry->inode = dir_inode;
+        dot_entry->size = 12;  // Minimum size for "." entry
+        dot_entry->name_lsb = 1;
+        dot_entry->type = D_DIR;
+        dir_block[8] = '.';
+        
+        // Add ".." entry  
+        dir_entry_t* dotdot_entry = (dir_entry_t*)(dir_block + 12);
+        dotdot_entry->inode = dir_inode;  // TODO: Should be parent inode
+        dotdot_entry->size = GET_BLOCK_SIZE() - 12 - entry_size;  // Rest of block minus our new entry
+        dotdot_entry->name_lsb = 2;
+        dotdot_entry->type = D_DIR;
+        dir_block[20] = '.';
+        dir_block[21] = '.';
+        
+        // Add new file entry at the end
+        uint32_t offset = 12 + dotdot_entry->size;
+        dir_entry_t* new_entry = (dir_entry_t*)(dir_block + offset);
+        new_entry->inode = file_inode;
+        new_entry->size = entry_size;
+        new_entry->name_lsb = name_len;
+        new_entry->type = type;
+        memcpy(dir_block + offset + 8, name, name_len);
+        
+        // Adjust previous entry size
+        dotdot_entry->size = offset - 12;
+        
+        write_block(directory.dptr0, dir_block);
+        kfree(dir_block);
+    } else {
+        // Directory block exists, append to it
+        // This is a simplified implementation - normally you'd need to parse existing entries
+        char* dir_block = (char*)kmalloc(GET_BLOCK_SIZE());
+        read_block(directory.dptr0, dir_block);
+        
+        // Find end of existing entries (simplified - assumes we can append at the end)
+        uint32_t offset = directory.size_lower % GET_BLOCK_SIZE();
+        if (offset + entry_size > GET_BLOCK_SIZE()) {
+            kputs("ext2_add_dir_entry: Directory block full (need to allocate new block)");
+            kfree(dir_block);
+            return -1;
+        }
+        
+        // Add new entry
+        dir_entry_t* new_entry = (dir_entry_t*)(dir_block + offset);
+        new_entry->inode = file_inode;
+        new_entry->size = entry_size;
+        new_entry->name_lsb = name_len;
+        new_entry->type = type;
+        memcpy(dir_block + offset + 8, name, name_len);
+        
+        write_block(directory.dptr0, dir_block);
+        kfree(dir_block);
+    }
+    
+    // Update directory inode
+    write_inode(dir_inode, &directory);
+    
+    return 0;
+}
+
+
+// Create a new file in ext2 filesystem
+uint32_t ext2_create_file(uint32_t parent_inode, const char* filename, uint32_t mode) {
+    // Allocate new inode
+    uint32_t new_inode_num = allocate_inode();
+    
+    // Create inode structure
+    inode_t new_inode = {0};
+    new_inode.type_perms = FILE | U_RD | U_WR | G_RD | O_RD; // Regular file with 644 permissions
+    new_inode.uid = 0;
+    new_inode.size_lower = 0;  // Empty file initially
+    new_inode.lacc_time = 0;   // TODO: Add proper timestamp
+    new_inode.create_time = 0;
+    new_inode.lmod_time = 0;
+    new_inode.delete_time = 0;
+    new_inode.gid = 0;
+    new_inode.hard_links = 1;
+    new_inode.sector_count = 0;
+    new_inode.flags = 0;
+    new_inode.os_spec1 = 0;
+    
+    // Initialize all block pointers to 0 (no blocks allocated yet)
+    new_inode.dptr0 = 0;
+    new_inode.dptr1 = 0;
+    new_inode.dptr2 = 0;
+    new_inode.dptr3 = 0;
+    new_inode.dptr4 = 0;
+    new_inode.dptr5 = 0;
+    new_inode.dptr6 = 0;
+    new_inode.dptr7 = 0;
+    new_inode.dptr8 = 0;
+    new_inode.dptr9 = 0;
+    new_inode.dptr10 = 0;
+    new_inode.dptr11 = 0;
+    new_inode.sing_idptr = 0;
+    new_inode.doub_idptr = 0;
+    new_inode.trip_idptr = 0;
+    
+    new_inode.gen_number = 0;
+    new_inode.ext_attr = 0;
+    new_inode.size_upper = 0;
+    new_inode.frag_addr = 0;
+    
+    // Write inode to disk
+    write_inode(new_inode_num, &new_inode);
+    
+    // Add directory entry to parent directory
+    if (ext2_add_dir_entry(parent_inode, new_inode_num, filename, D_FILE) != 0) {
+        kputs("ext2_create_file: Failed to add directory entry");
+        return 0;
+    }
+    
+    kprintf("ext2_create_file: Created file '%s' with inode %d\n", filename, new_inode_num);
+    return new_inode_num;
+}
+
+
+
+// Create directory
+uint32_t ext2_create_dir(uint32_t parent_inode, const char* dirname, uint32_t mode) {
+    // Allocate new inode
+    uint32_t new_inode_num = allocate_inode();
+    
+    // Create directory inode
+    inode_t new_inode = {0};
+    new_inode.type_perms = DIR | U_RD | U_WR | U_EX | G_RD | G_EX | O_RD | O_EX; // Directory with 755 permissions
+    new_inode.uid = 0;
+    new_inode.size_lower = GET_BLOCK_SIZE();  // One block for directory
+    new_inode.lacc_time = 0;
+    new_inode.create_time = 0;
+    new_inode.lmod_time = 0;
+    new_inode.delete_time = 0;
+    new_inode.gid = 0;
+    new_inode.hard_links = 2;  // "." and parent reference
+    new_inode.sector_count = GET_SECTORS_PER_BLOCK();
+    new_inode.flags = 0;
+    
+    // Allocate directory block
+    new_inode.dptr0 = allocate_block();
+    
+    // Initialize all other pointers to 0
+    new_inode.dptr1 = 0;
+    // ... (initialize rest)
+    
+    // Write inode to disk
+    write_inode(new_inode_num, &new_inode);
+    
+    // Create initial directory content
+    char* dir_block = (char*)kmalloc(GET_BLOCK_SIZE());
+    memset(dir_block, 0, GET_BLOCK_SIZE());
+    
+    // Add "." entry
+    dir_entry_t* dot_entry = (dir_entry_t*)dir_block;
+    dot_entry->inode = new_inode_num;
+    dot_entry->size = 12;
+    dot_entry->name_lsb = 1;
+    dot_entry->type = D_DIR;
+    dir_block[8] = '.';
+    
+    // Add ".." entry
+    dir_entry_t* dotdot_entry = (dir_entry_t*)(dir_block + 12);
+    dotdot_entry->inode = parent_inode;
+    dotdot_entry->size = GET_BLOCK_SIZE() - 12;  // Rest of block
+    dotdot_entry->name_lsb = 2;
+    dotdot_entry->type = D_DIR;
+    dir_block[20] = '.';
+    dir_block[21] = '.';
+    
+    write_block(new_inode.dptr0, dir_block);
+    kfree(dir_block);
+    
+    // Add directory entry to parent
+    if (ext2_add_dir_entry(parent_inode, new_inode_num, dirname, D_DIR) != 0) {
+        kputs("ext2_create_dir: Failed to add directory entry");
+        return 0;
+    }
+    
+    return new_inode_num;
+}
+
+
+// TODO
+// This is a simplified implementation that:
+// 1. Only handles direct blocks (files up to 48KB)
+// 2. Uses simple block allocation without bitmap checking
+// 3. Doesn't handle block deallocation
+// 4. Doesn't update block usage bitmaps
+// For Future:
+// 1. Block Bitmap Management: Read/write block allocation bitmaps
+// 2. Indirect Block Support: Handle singly/doubly/triply indirect blocks
+// 3. Proper Error Handling: Handle disk write failures
+// 4. Block Deallocation: Free unused blocks when files shrink
+// 5. Directory Updates: Update directory entries for new files
+// 6. Journaling: Add transaction support for reliability
 
 
 

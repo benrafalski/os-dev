@@ -133,9 +133,7 @@ void* krealloc(void* ptr, size_t new_size) {
     uint8_t* src = (uint8_t*)ptr;
     uint8_t* dst = (uint8_t*)new_ptr;
     
-    for (size_t i = 0; i < copy_size; i++) {
-        dst[i] = src[i];
-    }
+    memcpy(dst, src, copy_size);
     
     // Free old block
     kfree(ptr);
