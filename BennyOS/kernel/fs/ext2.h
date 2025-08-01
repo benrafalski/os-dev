@@ -229,6 +229,7 @@ void read_sectors_lba(uint32_t lba, uint16_t num_sectors, char* buff_addr){
     }
 }
 
+
 void read_inode_table(){
     if(bgd_table.inode_table == 0){
         panic("ext.h (read_inode_table): Cannot read inode_table before bgd_table...");
@@ -241,15 +242,35 @@ uint32_t get_inode_size(inode_t inode){
     return (inode.size_lower < SECTOR_SIZE ? SECTOR_SIZE : inode.size_lower);
 }
 
-void read_inode(uint32_t inode, inode_t* inode_struct){
-    read_sectors_lba(LBA_4096(inode), INODE_SIZE/SECTOR_SIZE, (char*)inode_struct);
-}
-
-// Helper function to read a block of data
 void read_block(uint32_t block_num, char* buffer) {
     if (block_num == 0) return; // No block allocated
     read_sectors_lba(LBA_4096(block_num), GET_SECTORS_PER_BLOCK(), buffer);
 }
+
+void read_inode(uint32_t inode_num, inode_t* inode_struct) {
+    if (inode_num <= INODE_TABLE_SIZE) {
+        // Use cached inode
+        *inode_struct = inode_table[inode_num - 1];
+        return;
+    }
+    
+    // Calculate the correct block and offset for this inode
+    uint32_t inode_index = inode_num - 1;  // Inodes are 1-indexed, array is 0-indexed
+    uint32_t inode_block = bgd_table.inode_table + (inode_index * INODE_SIZE) / GET_BLOCK_SIZE();
+    uint32_t inode_offset = (inode_index * INODE_SIZE) % GET_BLOCK_SIZE();
+    
+    // Read the entire block containing this inode
+    char* block_buffer = (char*)kmalloc(GET_BLOCK_SIZE());
+    read_block(inode_block, block_buffer);
+    
+    // Extract the inode from the block
+    memcpy((char*)inode_struct, block_buffer + inode_offset, INODE_SIZE);
+    
+    kfree(block_buffer);
+}
+
+// Helper function to read a block of data
+
 
 // Helper function to read indirect blocks
 void read_indirect_blocks(uint32_t indirect_block, char* buffer, uint32_t* buffer_offset, uint32_t max_size) {
@@ -432,11 +453,6 @@ dir_list_node_t* read_directory(uint32_t inode_num){ // 0x951e
 }
 
 
-void write_block(uint32_t block_num, char* buffer) {
-    if (block_num == 0) return; // No block allocated
-    ata_lba_write(LBA_4096(block_num), GET_SECTORS_PER_BLOCK(), buffer);
-}
-
 // Helper function to write sectors using LBA
 void write_sectors_lba(uint32_t lba, uint16_t num_sectors, char* buff_addr){
     char* start = buff_addr;
@@ -447,6 +463,13 @@ void write_sectors_lba(uint32_t lba, uint16_t num_sectors, char* buff_addr){
         start += SECTOR_SIZE;
     }
 }
+
+void write_block(uint32_t block_num, char* buffer) {
+    if (block_num == 0) return; // No block allocated
+    write_sectors_lba(LBA_4096(block_num), GET_SECTORS_PER_BLOCK(), buffer);
+}
+
+
 
 // Write superblock back to disk
 void write_superblock() {

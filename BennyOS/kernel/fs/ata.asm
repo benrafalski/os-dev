@@ -172,7 +172,11 @@ ata_lba_write:
     push rdx
     push rdi
     
-    mov rbx, rax         ; Save LBA in RBX
+    mov rax, rdi    ; Move LBA to rax 
+    mov rcx, rsi    ; Move sector count to rcx  
+    mov rdi, rdx    ; Move buffer address to rdi
+
+    mov rbx, rax    ; Save LBA in RBX
 
     mov edx, 0x01F6      ; Port to send drive and bit 24 - 27 of LBA
     shr eax, 24          ; Get bit 24 - 27 in al
@@ -206,7 +210,7 @@ ata_lba_write:
     test al, 8           ; the sector buffer requires servicing.
     jz .still_going_lba_write      ; until the sector buffer is ready.
 
-    mov rax, 256         ; to read 256 words = 1 sector
+    mov rax, 256         ; to write 256 words = 1 sector
     xor bx, bx
     mov bl, cl           ; write CL sectors
     mul bx
@@ -215,6 +219,21 @@ ata_lba_write:
     mov rsi, rdi
     rep outsw            ; out
 
+    ; Wait for write completion
+    mov edx, 0x1F7       ; Command/Status port
+.wait_write_complete:
+    in al, dx            ; Read status
+    test al, 0x80        ; Check BSY (busy) bit
+    jnz .wait_write_complete  ; Wait until not busy
+    
+    ; Optional: Flush cache to ensure data reaches disk
+    mov al, 0xE7         ; Cache flush command
+    out dx, al
+.wait_flush:
+    in al, dx            ; Read status
+    test al, 0x80        ; Check BSY bit  
+    jnz .wait_flush      ; Wait for flush to complete
+
     pop rdi
     pop rdx
     pop rcx
@@ -222,3 +241,24 @@ ata_lba_write:
     pop rax
     popfq
     ret
+
+; .still_going_lba_write:  in al, dx
+;     test al, 8           ; the sector buffer requires servicing.
+;     jz .still_going_lba_write      ; until the sector buffer is ready.
+
+;     mov rax, 256         ; to read 256 words = 1 sector
+;     xor bx, bx
+;     mov bl, cl           ; write CL sectors
+;     mul bx
+;     mov rcx, rax         ; RCX is counter for OUTSW
+;     mov rdx, 0x1F0       ; Data port, in and out
+;     mov rsi, rdi
+;     rep outsw            ; out
+
+;     pop rdi
+;     pop rdx
+;     pop rcx
+;     pop rbx
+;     pop rax
+;     popfq
+;     ret

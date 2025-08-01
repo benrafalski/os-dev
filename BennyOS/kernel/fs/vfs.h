@@ -930,6 +930,264 @@ int vfs_mkdir(const char* path, uint32_t mode) {
 
 
 
+// Enhanced test function with more debugging
+void test_write_inode() {
+    kputs("=== Testing write_inode functionality ===");
+    
+    // Test 1: Test writing to cached inode (inode_num <= INODE_TABLE_SIZE)
+    kputs("Test 1: Testing cached inode write/read...");
+    
+    uint32_t test_inode_num = 5; // Should be within INODE_TABLE_SIZE (20)
+    inode_t original_inode;
+    inode_t test_inode;
+    inode_t read_back_inode;
+    
+    // Save original inode for restoration later
+    if (test_inode_num <= INODE_TABLE_SIZE) {
+        original_inode = inode_table[test_inode_num - 1];
+    } else {
+        read_inode(test_inode_num, &original_inode);
+    }
+    
+    // Create test inode with known values
+    test_inode.type_perms = FILE | U_RD | U_WR;
+    test_inode.uid = 1000;
+    test_inode.size_lower = 1234;
+    test_inode.lacc_time = 0x12345678;
+    test_inode.create_time = 0x87654321;
+    test_inode.lmod_time = 0xABCDEF00;
+    test_inode.delete_time = 0;
+    test_inode.gid = 100;
+    test_inode.hard_links = 1;
+    test_inode.sector_count = 3;
+    test_inode.flags = 0;
+    test_inode.os_spec1 = 0;
+    test_inode.dptr0 = 42;  // Test direct pointer
+    test_inode.dptr1 = 43;
+    test_inode.dptr2 = 0;
+    test_inode.dptr3 = 0;
+    test_inode.dptr4 = 0;
+    test_inode.dptr5 = 0;
+    test_inode.dptr6 = 0;
+    test_inode.dptr7 = 0;
+    test_inode.dptr8 = 0;
+    test_inode.dptr9 = 0;
+    test_inode.dptr10 = 0;
+    test_inode.dptr11 = 0;
+    test_inode.sing_idptr = 0;
+    test_inode.doub_idptr = 0;
+    test_inode.trip_idptr = 0;
+    test_inode.gen_number = 1;
+    test_inode.ext_attr = 0;
+    test_inode.size_upper = 0;
+    test_inode.frag_addr = 0;
+    // Clear os_spec2
+    for (int i = 0; i < 12; i++) {
+        test_inode.os_spec2[i] = 0;
+    }
+    
+    kprintf("Writing test inode %d with size=%d, dptr0=%d, dptr1=%d\n", 
+            test_inode_num, test_inode.size_lower, test_inode.dptr0, test_inode.dptr1);
+    
+    // Write the test inode
+    write_inode(test_inode_num, &test_inode);
+    
+    // Read it back
+    if (test_inode_num <= INODE_TABLE_SIZE) {
+        read_back_inode = inode_table[test_inode_num - 1];
+    } else {
+        read_inode(test_inode_num, &read_back_inode);
+    }
+    
+    // Verify the data
+    int test1_passed = 1;
+    if (read_back_inode.size_lower != test_inode.size_lower) {
+        kprintf("ERROR: size_lower mismatch - expected %d, got %d\n", 
+                test_inode.size_lower, read_back_inode.size_lower);
+        test1_passed = 0;
+    }
+    if (read_back_inode.type_perms != test_inode.type_perms) {
+        kprintf("ERROR: type_perms mismatch - expected 0x%x, got 0x%x\n", 
+                test_inode.type_perms, read_back_inode.type_perms);
+        test1_passed = 0;
+    }
+    if (read_back_inode.uid != test_inode.uid) {
+        kprintf("ERROR: uid mismatch - expected %d, got %d\n", 
+                test_inode.uid, read_back_inode.uid);
+        test1_passed = 0;
+    }
+    if (read_back_inode.dptr0 != test_inode.dptr0) {
+        kprintf("ERROR: dptr0 mismatch - expected %d, got %d\n", 
+                test_inode.dptr0, read_back_inode.dptr0);
+        test1_passed = 0;
+    }
+    if (read_back_inode.dptr1 != test_inode.dptr1) {
+        kprintf("ERROR: dptr1 mismatch - expected %d, got %d\n", 
+                test_inode.dptr1, read_back_inode.dptr1);
+        test1_passed = 0;
+    }
+    if (read_back_inode.hard_links != test_inode.hard_links) {
+        kprintf("ERROR: hard_links mismatch - expected %d, got %d\n", 
+                test_inode.hard_links, read_back_inode.hard_links);
+        test1_passed = 0;
+    }
+    
+    if (test1_passed) {
+        kputs("Test 1 PASSED: Cached inode write/read successful");
+    } else {
+        kputs("Test 1 FAILED: Cached inode write/read failed");
+    }
+    
+    // Test 2: Test writing to non-cached inode with enhanced debugging
+    kputs("Test 2: Testing non-cached inode write/read with debugging...");
+    
+    uint32_t test_inode_num2 = INODE_TABLE_SIZE + 5; // Should be beyond cached range
+    inode_t test_inode2;
+    inode_t read_back_inode2;
+    
+    kprintf("DEBUG: Testing inode %d (INODE_TABLE_SIZE=%d)\n", test_inode_num2, INODE_TABLE_SIZE);
+    kprintf("DEBUG: bgd_table.inode_table=%d\n", bgd_table.inode_table);
+    kprintf("DEBUG: GET_BLOCK_SIZE()=%d\n", GET_BLOCK_SIZE());
+    
+    // Calculate what write_inode should be doing
+    uint32_t inode_index = test_inode_num2 - 1;
+    uint32_t expected_block = bgd_table.inode_table + (inode_index * INODE_SIZE) / GET_BLOCK_SIZE();
+    uint32_t expected_offset = (inode_index * INODE_SIZE) % GET_BLOCK_SIZE();
+    
+    kprintf("DEBUG: Expected inode_index=%d, block=%d, offset=%d\n", 
+            inode_index, expected_block, expected_offset);
+    
+    // Create a different test inode
+    test_inode2.type_perms = DIR | U_RD | U_WR | U_EX;
+    test_inode2.uid = 2000;
+    test_inode2.size_lower = 4096;
+    test_inode2.lacc_time = 0x11111111;
+    test_inode2.create_time = 0x22222222;
+    test_inode2.lmod_time = 0x33333333;
+    test_inode2.delete_time = 0;
+    test_inode2.gid = 200;
+    test_inode2.hard_links = 2;
+    test_inode2.sector_count = 8;
+    test_inode2.flags = 0;
+    test_inode2.os_spec1 = 0;
+    test_inode2.dptr0 = 100;
+    test_inode2.dptr1 = 101;
+    test_inode2.dptr2 = 102;
+    test_inode2.dptr3 = 0;
+    test_inode2.dptr4 = 0;
+    test_inode2.dptr5 = 0;
+    test_inode2.dptr6 = 0;
+    test_inode2.dptr7 = 0;
+    test_inode2.dptr8 = 0;
+    test_inode2.dptr9 = 0;
+    test_inode2.dptr10 = 0;
+    test_inode2.dptr11 = 0;
+    test_inode2.sing_idptr = 200;
+    test_inode2.doub_idptr = 0;
+    test_inode2.trip_idptr = 0;
+    test_inode2.gen_number = 2;
+    test_inode2.ext_attr = 0;
+    test_inode2.size_upper = 0;
+    test_inode2.frag_addr = 0;
+    for (int i = 0; i < 12; i++) {
+        test_inode2.os_spec2[i] = 0;
+    }
+    
+    kprintf("Writing test inode %d with size=%d, dptr0=%d, sing_idptr=%d\n", 
+            test_inode_num2, test_inode2.size_lower, test_inode2.dptr0, test_inode2.sing_idptr);
+    
+    // Before writing, let's see what's currently at that location
+    kputs("DEBUG: Reading current data before write...");
+    inode_t before_write;
+    read_inode(test_inode_num2, &before_write);
+    kprintf("DEBUG: Before write - size=%d, uid=%d, dptr0=%d\n", 
+            before_write.size_lower, before_write.uid, before_write.dptr0);
+    
+    // Write the test inode
+    write_inode(test_inode_num2, &test_inode2);
+    
+    // Immediately read it back
+    kputs("DEBUG: Reading back immediately after write...");
+    read_inode(test_inode_num2, &read_back_inode2);
+    kprintf("DEBUG: After write - size=%d, uid=%d, dptr0=%d\n", 
+            read_back_inode2.size_lower, read_back_inode2.uid, read_back_inode2.dptr0);
+    
+    // Let's also manually check by reading the raw block
+    kputs("DEBUG: Reading raw block data...");
+    char* debug_block = (char*)kmalloc(GET_BLOCK_SIZE());
+    read_block(expected_block, debug_block);
+    inode_t* raw_inode = (inode_t*)(debug_block + expected_offset);
+    kprintf("DEBUG: Raw block data - size=%d, uid=%d, dptr0=%d\n", 
+            raw_inode->size_lower, raw_inode->uid, raw_inode->dptr0);
+    kfree(debug_block);
+    
+    // Verify the data
+    int test2_passed = 1;
+    if (read_back_inode2.size_lower != test_inode2.size_lower) {
+        kprintf("ERROR: size_lower mismatch - expected %d, got %d\n", 
+                test_inode2.size_lower, read_back_inode2.size_lower);
+        test2_passed = 0;
+    }
+    if (read_back_inode2.type_perms != test_inode2.type_perms) {
+        kprintf("ERROR: type_perms mismatch - expected 0x%x, got 0x%x\n", 
+                test_inode2.type_perms, read_back_inode2.type_perms);
+        test2_passed = 0;
+    }
+    if (read_back_inode2.uid != test_inode2.uid) {
+        kprintf("ERROR: uid mismatch - expected %d, got %d\n", 
+                test_inode2.uid, read_back_inode2.uid);
+        test2_passed = 0;
+    }
+    if (read_back_inode2.dptr0 != test_inode2.dptr0) {
+        kprintf("ERROR: dptr0 mismatch - expected %d, got %d\n", 
+                test_inode2.dptr0, read_back_inode2.dptr0);
+        test2_passed = 0;
+    }
+    if (read_back_inode2.sing_idptr != test_inode2.sing_idptr) {
+        kprintf("ERROR: sing_idptr mismatch - expected %d, got %d\n", 
+                test_inode2.sing_idptr, read_back_inode2.sing_idptr);
+        test2_passed = 0;
+    }
+    
+    if (test2_passed) {
+        kputs("Test 2 PASSED: Non-cached inode write/read successful");
+    } else {
+        kputs("Test 2 FAILED: Non-cached inode write/read failed");
+    }
+    
+    // Test 3: Verify inode table integrity after multiple writes
+    kputs("Test 3: Testing inode table integrity...");
+    
+    // Write original inode back to restore filesystem state
+    write_inode(test_inode_num, &original_inode);
+    
+    // Verify it was restored correctly
+    inode_t restored_inode;
+    if (test_inode_num <= INODE_TABLE_SIZE) {
+        restored_inode = inode_table[test_inode_num - 1];
+    } else {
+        read_inode(test_inode_num, &restored_inode);
+    }
+    
+    int test3_passed = 1;
+    if (restored_inode.size_lower != original_inode.size_lower) {
+        kprintf("ERROR: Failed to restore original inode - size mismatch\n");
+        test3_passed = 0;
+    }
+    if (restored_inode.type_perms != original_inode.type_perms) {
+        kprintf("ERROR: Failed to restore original inode - type_perms mismatch\n");
+        test3_passed = 0;
+    }
+    
+    if (test3_passed) {
+        kputs("Test 3 PASSED: Inode table integrity maintained");
+    } else {
+        kputs("Test 3 FAILED: Inode table integrity compromised");
+    }
+    
+    kputs("=== write_inode testing complete ===");
+}
+
 void init_vfs(){
     // Initialize globals
     num_mounted_fs = 0;
