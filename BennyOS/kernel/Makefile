@@ -1,11 +1,25 @@
 HEADERS = $(wildcard ./print/*.h ./interrupts/*.h ./memory/*.h ./fs*.h)
 
-all: ../bin/os-image
+all: ../build/disk.img
 
-# gcc ./fs/makefs.c -o out
-# 	./out
-../bin/os-image: ../bin/boot_sector.bin ../bin/kernel.bin
-	cat ../bin/boot_sector.bin ../bin/kernel.bin > $@
+
+# Create disk image
+../build/disk.img: ../bin/boot1.bin ../bin/boot2.bin ../bin/kernel.bin
+    # Create empty disk image
+	dd if=/dev/zero of=$@ bs=1M count=10
+    
+    # Write MBR (stage1)
+	dd if=../bin/boot1.bin of=$@ bs=512 count=1 conv=notrunc
+    
+    # Write stage2 starting at sector 2
+	dd if=../bin/boot2.bin of=$@ bs=512 seek=1 conv=notrunc
+    
+    # Set up ext2 filesystem starting at a safe offset sector 100
+    # Then copy kernel to the filesystem
+	cd ../build && ./mkdsk.sh
+
+../bin/os-image: ../bin/boot1.bin ../bin/boot2.bin ../bin/kernel.bin
+	cat ../bin/boot1.bin ../bin/boot1.bin ../bin/kernel.bin > $@
 
 # ld -o $@ -Ttext 0xFFFFFFFF80000000 $^ --oformat binary
 ../bin/kernel.bin: ../bin/kernel_entry.o ../bin/kernel.o ../bin/isr.o ../bin/ata.o
@@ -23,7 +37,13 @@ all: ../bin/os-image
 ../bin/isr.o: ./interrupts/isr.asm
 	nasm $< -f elf64 -o $@
 
-../bin/boot_sector.bin: ../boot/new_boot.asm
+# ../bin/boot_sector.bin: ../boot/new_boot.asm
+# 	nasm $< -f bin -o $@ 
+
+../bin/boot1.bin: ../boot/boot1.asm
+	nasm $< -f bin -o $@ 
+
+../bin/boot2.bin: ../boot/boot2.asm
 	nasm $< -f bin -o $@ 
 
 clean:
