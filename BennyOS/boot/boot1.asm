@@ -3,6 +3,7 @@
 
 STAGE2_OFFSET equ 0x7e00  ; Load stage2 right after MBR
 STAGE2_SECTORS equ 10     ; Adjust based on stage2 size
+STAGE2_START equ 1   ; Starting sector (LBA)
 
 mov [BOOT_DRIVE], dl
 
@@ -10,11 +11,12 @@ mov [BOOT_DRIVE], dl
 mov bp, 0x7c00
 mov sp, bp
 
-; Load stage2 from disk
-mov bx, STAGE2_OFFSET     ; Where to load boot2
-mov dh, STAGE2_SECTORS    ; How many sectors
-mov dl, [BOOT_DRIVE]      ; Drive number
-mov cl, 2                 ; Start from sector 2 (after MBR)
+; load stage2 from disk
+mov bx, STAGE2_OFFSET           ; Load address
+mov dh, STAGE2_SECTORS          ; Number of sectors
+mov dl, [BOOT_DRIVE]            ; Drive number
+xor ax, ax
+mov ax, STAGE2_START
 
 call disk_load
 

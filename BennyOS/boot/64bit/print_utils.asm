@@ -1,7 +1,7 @@
 [bits 64]
 VIDEO_MEMORY equ 0xb8000
 
-clear_screen:
+clear_screen_64:
     push rax
     push rdx
     push rcx

@@ -67,3 +67,15 @@ print_string_pm_loop:
 print_string_pm_done:
     popa
     ret
+
+clear_screen_32:
+    pusha
+    mov eax, 0x0
+    mov edx, VIDEO_MEMORY
+    mov ecx, 80*25
+clear_screen_loop:
+    mov [edx], ax
+    add edx, 2
+    loop clear_screen_loop
+    popa
+    ret

@@ -1,6 +1,7 @@
 [bits 16]
 ; switch to protected mode
 switch_to_32:
+    
     cli                     ; disable interrupts
     lgdt [gdt_descriptor]   ; load GDT with the start address of the GDT
 
@@ -24,3 +25,5 @@ init_32:
     mov esp, ebp
 
     call BEGIN_PM
+
+in_32_msg db 'Inside switch_to_32', 0x0D, 0x0A, 0
