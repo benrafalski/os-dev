@@ -1,4 +1,4 @@
-HEADERS = $(wildcard ./print/*.h ./interrupts/*.h ./memory/*.h ./fs*.h)
+HEADERS = $(wildcard ./print/*.h ./interrupts/*.h ./memory/*.h ./fs/*.h ./pci/*.h)
 
 all: ../build/disk.img
 

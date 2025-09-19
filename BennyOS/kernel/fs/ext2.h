@@ -11,22 +11,20 @@ Block groups: contiguous groups of blocks, some of the blocks are used for metad
 Inode: structure on the disk that represents a file, dir, or sym-link; not an actual file but link to block with the actual file
 */
 
-#define SUPER_BLOCK_LBA     2
+
+#define FILESYSTEM_START_SECTOR 100
+#define SUPER_BLOCK_LBA     (FILESYSTEM_START_SECTOR + 2)   // Block 1 of filesystem
+#define BGD_TABLE_LBA       (FILESYSTEM_START_SECTOR + 8)   // Block 2 of filesystem  
 #define SUPER_BLOCK_SIZE    512
+#define BGD_TABLE_SIZE      512
 #define SECTOR_SIZE         512
 #define SECTORS_PER_DPTR    4
 
-
-#define BGD_TABLE_LBA       8
-#define BGD_TABLE_SIZE      512
 
 #define INODE_TABLE_SIZE    20
 #define INODE_SIZE          128
 
 #define ROOT_INODE          2
-
-#define LBA_4096(n) (n * 8)
-
 
 // EXT2 types
 enum {
@@ -199,6 +197,8 @@ uint32_t ext2_block_size = 0;
 #define GET_BLOCK_SIZE() (ext2_block_size ? ext2_block_size : (ext2_block_size = (1024 << superblock.block_size)))
 #define GET_SECTORS_PER_BLOCK() (GET_BLOCK_SIZE() / SECTOR_SIZE)
 #define GET_POINTERS_PER_BLOCK() (GET_BLOCK_SIZE() / 4)
+#define BLOCK_TO_LBA(b) ((b * GET_SECTORS_PER_BLOCK()) + FILESYSTEM_START_SECTOR)
+
 
 void read_superblock(){
     ata_lba_read(SUPER_BLOCK_LBA, SUPER_BLOCK_SIZE/SECTOR_SIZE, (char*)&superblock);
@@ -213,8 +213,46 @@ void read_superblock(){
     ext2_block_size = 1024 << superblock.block_size;
 }
 
+void print_superblock(){
+    kprintf("Superblock:\n");
+    kprintf("  Inodes: %d\n", superblock.num_inodes);
+    kprintf("  Blocks: %d\n", superblock.num_blocks);
+    kprintf("  Reserved Blocks: %d\n", superblock.num_reserved_blocks);
+    kprintf("  Unallocated Blocks: %d\n", superblock.num_unalloc_blocks);
+    kprintf("  Unallocated Inodes: %d\n", superblock.num_unalloc_inodes);
+    kprintf("  Block Size: %d\n", GET_BLOCK_SIZE());
+    kprintf("  Fragment Size: %d\n", superblock.fragment_size);
+    kprintf("  Blocks per Group: %d\n", superblock.num_blocks_blockgroup);
+    kprintf("  Fragments per Group: %d\n", superblock.num_frags_blockgroup);
+    kprintf("  Inodes per Group: %d\n", superblock.num_inodes_blockgroup);
+    kprintf("  Last Mount Time: %d\n", superblock.last_mount);
+    kprintf("  Last Write Time: %d\n", superblock.last_write);
+    kprintf("  Mounts since last check: %d\n", superblock.mounts_since_cc);
+    kprintf("  Mounts before check: %d\n", superblock.mounts_before_cc);
+    kprintf("  Filesystem State: %s\n", (superblock.fs_state == 1) ? "Clean" : "Errors");
+    kprintf("  Error Handling: %d\n", superblock.error);
+    kprintf("  Last Check Time: %d\n", superblock.last_cc);
+    kprintf("  Check Interval: %d\n", superblock.int_force_cc);
+    kprintf("  OS ID: %d\n", superblock.os_id);
+    kprintf("  Major Version: %d\n", superblock.ver_major);
+    kprintf("  Minor Version: %d\n", superblock.ver_minor);
+    kprintf("  Reserved User ID: %d\n", superblock.reserve_user);
+    kprintf("  Reserved Group ID: %d\n", superblock.reserve_group);
+    kprintf("  First Non-Reserved Inode: %d\n", superblock.first_nonrsvd_inode);
+    kprintf("  Inode Size: %d\n", superblock.inode_size);
+}
+
 void read_bgd_table(){
     ata_lba_read(BGD_TABLE_LBA, BGD_TABLE_SIZE/SECTOR_SIZE, (char*)&bgd_table);
+}
+
+void print_bgd_table(){
+    kprintf("Block Group Descriptor Table:\n");
+    kprintf("  Block Usage Bitmap: %d\n", bgd_table.blk_use_bitmap);
+    kprintf("  Inode Usage Bitmap: %d\n", bgd_table.inode_use_bitmap);
+    kprintf("  Inode Table: %d\n", bgd_table.inode_table);
+    kprintf("  Unallocated Blocks: %d\n", bgd_table.unalloc_blocks);
+    kprintf("  Unallocated Inodes: %d\n", bgd_table.unalloc_inodes);
 }
 
 
@@ -234,9 +272,20 @@ void read_inode_table(){
     if(bgd_table.inode_table == 0){
         panic("ext.h (read_inode_table): Cannot read inode_table before bgd_table...");
     }
-    read_sectors_lba(LBA_4096(bgd_table.inode_table), (INODE_TABLE_SIZE*INODE_SIZE)/SECTOR_SIZE, (char*)&inode_table);
+    read_sectors_lba(BLOCK_TO_LBA(bgd_table.inode_table), (INODE_TABLE_SIZE*INODE_SIZE)/SECTOR_SIZE, (char*)&inode_table);
+    // kputs("Inode table loaded.");
 }
 
+void print_inode_table(){
+    kputs("Inode Table:");
+    for(int i = 0; i < INODE_TABLE_SIZE; i++){
+        inode_t inode = inode_table[i];
+        // if(inode.type_perms != 0){
+            kprintf(" Inode %d: type_perms=0x%x, uid=%d, size=%d, gid=%d, hard_links=%d, dptr0=%d, dptr1=%d\n", 
+                    i+1, inode.type_perms, inode.uid, inode.size_lower, inode.gid, inode.hard_links, inode.dptr0, inode.dptr1);
+        // }
+    }
+}
 
 uint32_t get_inode_size(inode_t inode){
     return (inode.size_lower < SECTOR_SIZE ? SECTOR_SIZE : inode.size_lower);
@@ -244,7 +293,7 @@ uint32_t get_inode_size(inode_t inode){
 
 void read_block(uint32_t block_num, char* buffer) {
     if (block_num == 0) return; // No block allocated
-    read_sectors_lba(LBA_4096(block_num), GET_SECTORS_PER_BLOCK(), buffer);
+    read_sectors_lba(BLOCK_TO_LBA(block_num), GET_SECTORS_PER_BLOCK(), buffer);
 }
 
 void read_inode(uint32_t inode_num, inode_t* inode_struct) {
@@ -369,9 +418,24 @@ void read_inode_data(inode_t inode, char* buff_addr) {
     }
 }
 
+
+void print_inode(inode_t inode) {
+    kprintf("inode: type_perms=0x%x, uid=%d, size=%d, lacc_time=%d, create_time=%d, lmod_time=%d, delete_time=%d, gid=%d, hard_links=%d, sector_count=%d\n", 
+            inode.type_perms, inode.uid, inode.size_lower, inode.lacc_time, inode.create_time, inode.lmod_time, inode.delete_time,
+            inode.gid, inode.hard_links, inode.sector_count);
+    kprintf("       flags=0x%x, dptr0=%d, dptr1=%d, dptr2=%d, dptr3=%d, dptr4=%d, dptr5=%d\n", 
+            inode.flags, inode.dptr0, inode.dptr1, inode.dptr2, inode.dptr3, inode.dptr4, inode.dptr5);
+    kprintf("       dptr6=%d, dptr7=%d, dptr8=%d, dptr9=%d, dptr10=%d, dptr11=%d\n", 
+            inode.dptr6, inode.dptr7, inode.dptr8, inode.dptr9, inode.dptr10, inode.dptr11);
+    kprintf("       sing_idptr=%d, doub_idptr=%d, trip_idptr=%d\n", 
+            inode.sing_idptr, inode.doub_idptr, inode.trip_idptr);
+}
+
+
 // Updated read_dir_inode function
 void read_dir_inode(inode_t inode, char* buff_addr){
     if(!(inode.type_perms & DIR)){
+        print_inode(inode);
         panic("ext.h (read_dir_inode): cannot read contents unless type is DIR");
     }
     
@@ -421,7 +485,7 @@ dir_list_node_t* read_directory(uint32_t inode_num){ // 0x951e
         read_dir_inode(inode_table[inode_num - 1], dir_contents);
     }else{
         inode_t *tmp_inode = (inode_t*)kmalloc(sizeof(inode_t));
-        read_sectors_lba(LBA_4096(inode_num), INODE_SIZE/SECTOR_SIZE, (char*)tmp_inode);
+        read_sectors_lba(BLOCK_TO_LBA(inode_num), INODE_SIZE/SECTOR_SIZE, (char*)tmp_inode);
         dir_contents = (uint8_t*)kmalloc(tmp_inode->size_lower);
         read_dir_inode(*tmp_inode, dir_contents);
     }    
@@ -466,7 +530,7 @@ void write_sectors_lba(uint32_t lba, uint16_t num_sectors, char* buff_addr){
 
 void write_block(uint32_t block_num, char* buffer) {
     if (block_num == 0) return; // No block allocated
-    write_sectors_lba(LBA_4096(block_num), GET_SECTORS_PER_BLOCK(), buffer);
+    write_sectors_lba(BLOCK_TO_LBA(block_num), GET_SECTORS_PER_BLOCK(), buffer);
 }
 
 
@@ -483,7 +547,7 @@ void write_bgd_table() {
 
 // Write inode table back to disk
 void write_inode_table() {
-    write_sectors_lba(LBA_4096(bgd_table.inode_table), (INODE_TABLE_SIZE*INODE_SIZE)/SECTOR_SIZE, (char*)&inode_table);
+    write_sectors_lba(BLOCK_TO_LBA(bgd_table.inode_table), (INODE_TABLE_SIZE*INODE_SIZE)/SECTOR_SIZE, (char*)&inode_table);
 }
 
 // Write a specific inode back to disk

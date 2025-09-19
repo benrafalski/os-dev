@@ -2,7 +2,7 @@
 [bits 16]
 
 KERNEL_OFFSET equ 0xa000
-KERNEL_SECTORS equ 120  ; Number of sectors to load (adjust as needed)
+KERNEL_SECTORS equ 125  ; Number of sectors to load (adjust as needed)
 KERNEL_SECTOR_START equ 820 ; Starting sector (LBA)
 MEMORY_MAP_ADDR equ 0x9500  ; Store memory map here (after stack, before kernel)
 

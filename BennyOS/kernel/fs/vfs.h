@@ -1200,9 +1200,14 @@ void init_vfs(){
     read_superblock();
     read_bgd_table();
     read_inode_table();
+
+    // kputs("Superblock and inode table loaded.");
+    // print_bgd_table();
+    // print_superblock();
+    // print_inode_table();
     
     // read the root directory, always at inode 2
-    if (vfs_mount_ext2("/", 2) == 0) {
+    if (vfs_mount_ext2("/", ROOT_INODE) == 0) {
         kprintf("Successfully mounted ext2 filesystem at / (vfs_root = %p)\n", vfs_root);
     } else {
         kputs("Failed to mount ext2 filesystem");

@@ -172,6 +172,14 @@ char read_key(void){
                     kputs("");
                     vfs_list_directory(vfs_root);
                 }
+                else if(strcmp("lsmem", buff) == 0) {
+                    kputs("");
+                    print_memory_map();
+                }
+                else if(strcmp("lspci", buff) == 0) {
+                    kputs("");
+                    pci_list_devices();
+                }
                 else {
                     if(buffer > 0) {
                         kprintf("\nCommand not recognized: '%s'", buff);
